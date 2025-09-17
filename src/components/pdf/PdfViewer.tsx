@@ -43,8 +43,8 @@ export default function PdfViewer() {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const printContainerRef = useRef<HTMLDivElement | null>(null);
-
-  const scale = 1.5;
+  const viewerRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(1.5);
 
   const updatePageLabel = () => {
     const total = visiblePages ? visiblePages.length : (pdfDoc?.numPages ?? 0);
@@ -75,7 +75,7 @@ export default function PdfViewer() {
         });
       });
     },
-    [pdfDoc, pageNumPending]
+    [pdfDoc, pageNumPending, scale]
   );
 
   const queueRenderPage = (num: number) => {
@@ -105,6 +105,41 @@ export default function PdfViewer() {
     setPageNum(n);
     queueRenderPage(n);
   };
+
+  // Fit page to available viewer area (no scroll; canvas scales to fit)
+  React.useEffect(() => {
+    const el = viewerRef.current;
+    if (!el || !pdfDoc) return;
+    let destroyed = false;
+    const fit = async () => {
+      try {
+        const page = await pdfDoc.getPage(pageNum);
+        const v1 = page.getViewport({ scale: 1 });
+        const padX = 16 * 2; // p-4 on container
+        const padY = 16 * 2; // p-4 on container
+        const availW = Math.max(0, el.clientWidth - padX);
+        const availH = Math.max(0, el.clientHeight - padY);
+        const s = Math.max(0.25, Math.min(4, Math.min(availW / v1.width, availH / v1.height)));
+        if (!destroyed) setScale((prev) => (Math.abs(prev - s) > 0.01 ? s : prev));
+      } catch {
+        // ignore
+      }
+    };
+    const ro = new ResizeObserver(() => fit());
+    ro.observe(el);
+    void fit();
+    return () => {
+      destroyed = true;
+      ro.disconnect();
+    };
+  }, [pdfDoc, pageNum]);
+
+  // Re-render current page when scale changes
+  React.useEffect(() => {
+    if (!pdfDoc) return;
+    queueRenderPage(pageNum);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scale]);
 
   const onPrint = async () => {
     if (!pdfDoc || !printContainerRef.current) return;
@@ -656,8 +691,8 @@ export default function PdfViewer() {
           }
         }}
       />
-      <div className="w-full max-w-5xl screen">
-        <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+      <div className="w-full h-full flex flex-col">
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 mb-3 shrink-0">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm text-gray-500">{pdfDoc ? (typeof pdfDoc.numPages === "number" ? `${pdfDoc.numPages} pages loaded` : "PDF loaded") : "No PDF loaded"}</div>
           </div>
@@ -682,9 +717,9 @@ export default function PdfViewer() {
             />
           </div>
         </div>
-          <div className="flex gap-4">
-          <div className="flex flex-col gap-2">
-            <div className="bg-white rounded-lg shadow p-2 text-xs text-gray-600">
+          <div className="flex gap-4 flex-1 min-h-0">
+          <div className="flex flex-col gap-2 w-[180px] min-w-[180px] shrink-0 overflow-hidden">
+            <div className="bg-white rounded-lg shadow p-2 text-xs text-gray-600 shrink-0">
               Thumb scale
               <input
                 type="range"
@@ -695,26 +730,29 @@ export default function PdfViewer() {
                 className="w-36 ml-2 align-middle"
               />
             </div>
-            <ThumbnailsSidebar
-              pdfDoc={pdfDoc}
-              currentPage={pageNum}
-              onSelectPage={(n: number) => {
-                if (!pdfDoc) return;
-                setPageNum(n);
-                queueRenderPage(n);
-              }}
-              thumbScale={thumbScale}
-              pages={visiblePages ?? undefined}
-              onDeletePage={deletePage}
-              hiddenPages={hiddenPages}
-              onRestorePagesAtEnd={restorePagesAtEnd}
-              onRestorePagesAtPosition={restorePagesAtPosition}
-              onReorderPages={reorderPages}
-            />
+            <div className="bg-white rounded-lg shadow p-2 overflow-auto flex-1 min-h-0">
+              <ThumbnailsSidebar
+                pdfDoc={pdfDoc}
+                currentPage={pageNum}
+                onSelectPage={(n: number) => {
+                  if (!pdfDoc) return;
+                  setPageNum(n);
+                  queueRenderPage(n);
+                }}
+                thumbScale={thumbScale}
+                pages={visiblePages ?? undefined}
+                onDeletePage={deletePage}
+                hiddenPages={hiddenPages}
+                onRestorePagesAtEnd={restorePagesAtEnd}
+                onRestorePagesAtPosition={restorePagesAtPosition}
+                onReorderPages={reorderPages}
+              />
+            </div>
           </div>
             <div
               id="pdf-viewer"
-              className="relative bg-white p-4 rounded-lg shadow-md flex justify-center items-center h-[calc(100%-200px)] min-h-500 grow"
+              ref={viewerRef}
+              className="relative bg-white p-4 rounded-lg shadow-md flex justify-center items-center grow min-h-0 h-full overflow-hidden"
               onDragOver={(e) => {
                 if (pdfDoc) return;
                 e.preventDefault();
@@ -756,9 +794,11 @@ export default function PdfViewer() {
                 />
               )}
             </div>
-            <HistorySidebar history={history} historyIndex={historyIndex} />
+            <div className="w-[220px] min-w-[220px] shrink-0 bg-white rounded-lg shadow p-2 overflow-auto">
+              <HistorySidebar history={history} historyIndex={historyIndex} />
+            </div>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-4 mt-4">
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-3 shrink-0">
           <Controls
             visible={controlsVisible}
             pageLabel={pageLabel}

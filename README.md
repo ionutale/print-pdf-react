@@ -1,3 +1,5 @@
+[Live Demo on GitHub Pages](https://ionutale.github.io/print-pdf-react)
+
 ## Print PDF React — Next.js App
 
 An interactive PDF viewer and annotator with print support, built with Next.js App Router, Tailwind CSS v4, and pdf.js (via CDN). Load a local PDF, navigate pages, add annotations (text/shapes/images), and print full-size pages with your annotations.

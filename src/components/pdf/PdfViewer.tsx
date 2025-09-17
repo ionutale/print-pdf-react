@@ -29,6 +29,7 @@ export default function PdfViewer() {
   const [fileKey, setFileKey] = useState<string | null>(null);
   const [thumbScale, setThumbScale] = useState<number>(20);
   const [visiblePages, setVisiblePages] = useState<number[] | null>(null);
+  const [hiddenPages, setHiddenPages] = useState<number[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [strokeColor, setStrokeColor] = useState<string>("#ef4444");
   const [lineWidth, setLineWidth] = useState<number>(2);
@@ -224,6 +225,7 @@ export default function PdfViewer() {
           }
           if (!restored) setPageNum(1);
           if (!restored) setVisiblePages(Array.from({ length: pdf.numPages }, (_, i) => i + 1));
+          setHiddenPages([]);
           setIsLoading(false);
           queueRenderPage(1);
         })
@@ -337,6 +339,20 @@ export default function PdfViewer() {
     }
   }, [annotations, pageNum, fileKey, visiblePages]);
 
+  // Safeguard: if current page becomes hidden (or not in visible list), move to nearest visible
+  React.useEffect(() => {
+    if (!pdfDoc || !visiblePages || visiblePages.length === 0) return;
+    if (!visiblePages.includes(pageNum)) {
+      // find nearest visible by absolute difference
+      const nearest = visiblePages.reduce((best, p) => {
+        if (best === null) return p;
+        return Math.abs(p - pageNum) < Math.abs(best - pageNum) ? p : best;
+      }, null as number | null)!;
+      setPageNum(nearest);
+      queueRenderPage(nearest);
+    }
+  }, [visiblePages, pageNum, pdfDoc]);
+
   const deletePage = (n: number) => {
     if (!visiblePages) return;
     if (visiblePages.length <= 1) return; // don't delete last page
@@ -344,6 +360,7 @@ export default function PdfViewer() {
     if (idx === -1) return;
     const nextPages = visiblePages.filter((p) => p !== n);
     setVisiblePages(nextPages);
+    setHiddenPages((prev) => Array.from(new Set([...prev, n])).sort((a, b) => a - b));
     setAnnotations((prev) => prev.filter((a) => a.page !== n));
     // adjust current page only if we removed the current one
     if (pageNum === n) {
@@ -351,6 +368,25 @@ export default function PdfViewer() {
       setPageNum(candidate);
       queueRenderPage(candidate);
     }
+  };
+
+  const restorePagesAtEnd = (pages: number[]) => {
+    if (!pdfDoc) return;
+    if (!visiblePages) return;
+    const toRestore = pages.filter((p) => !visiblePages.includes(p));
+    if (toRestore.length === 0) return;
+    setVisiblePages([...visiblePages, ...toRestore]);
+    setHiddenPages((prev) => prev.filter((p) => !toRestore.includes(p)));
+  };
+
+  const reorderPages = (nextOrder: number[]) => {
+    // Accept only permutation of current visiblePages
+    if (!visiblePages) return;
+    const setA = new Set(visiblePages);
+    const setB = new Set(nextOrder);
+    if (setA.size !== setB.size) return;
+    for (const v of setA) if (!setB.has(v)) return;
+    setVisiblePages(nextOrder.slice());
   };
 
   const pageLabel = updatePageLabel();
@@ -429,6 +465,9 @@ export default function PdfViewer() {
               thumbScale={thumbScale}
               pages={visiblePages ?? undefined}
               onDeletePage={deletePage}
+              hiddenPages={hiddenPages}
+              onRestorePagesAtEnd={restorePagesAtEnd}
+              onReorderPages={reorderPages}
             />
           </div>
             <div

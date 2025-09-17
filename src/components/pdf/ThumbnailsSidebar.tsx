@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 type Props = {
   pdfDoc: any | null;
@@ -8,10 +8,14 @@ type Props = {
   thumbScale?: number; // percentage, default 20
   pages?: number[]; // optional explicit list of pages to show
   onDeletePage?: (pageNum: number) => void;
+  hiddenPages?: number[];
+  onRestorePagesAtEnd?: (pages: number[]) => void;
+  onReorderPages?: (nextOrder: number[]) => void;
 };
 
-export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, thumbScale = 20, pages: overridePages, onDeletePage }: Props) {
+export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, thumbScale = 20, pages: overridePages, onDeletePage, hiddenPages = [], onRestorePagesAtEnd, onReorderPages }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [selectedHidden, setSelectedHidden] = useState<Set<number>>(new Set());
 
   const pages = useMemo(() => {
     if (overridePages) return overridePages;
@@ -24,6 +28,7 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
     if (!container || !pdfDoc) return;
     // StrictMode-safe: reset container at the start to avoid duplicates
     container.innerHTML = "";
+    let dragFrom: number | null = null;
     const renderThumb = async (num: number) => {
       const wrapper = container.querySelector<HTMLDivElement>(`div[data-page="${num}"]`);
       if (!wrapper) return;
@@ -54,7 +59,12 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
         btn.title = 'Delete page';
         btn.className = 'text-xs text-red-600 hover:text-red-700 px-1 py-0.5 rounded';
         btn.innerText = 'Delete';
-        btn.onclick = (e) => { e.stopPropagation(); onDeletePage(num); };
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          if (!onDeletePage) return;
+          const ok = window.confirm(`Delete page ${num}? You can restore it later.`);
+          if (ok) onDeletePage(num);
+        };
         row.appendChild(btn);
       }
       wrapper.appendChild(row);
@@ -83,6 +93,40 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
       }
       wrapper.className = "p-2 flex flex-col items-center gap-1 animate-pulse";
       wrapper.innerHTML = "";
+      wrapper.draggable = true;
+      wrapper.addEventListener('dragstart', (e) => {
+        dragFrom = n;
+        e.dataTransfer?.setData('text/plain', String(n));
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+      });
+      wrapper.addEventListener('dragover', (e) => {
+        if (!onReorderPages) return;
+        e.preventDefault();
+        if (!wrapper) return;
+        wrapper.classList.add('ring-2', 'ring-indigo-400');
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+      });
+      wrapper.addEventListener('dragleave', () => {
+        if (!wrapper) return;
+        wrapper.classList.remove('ring-2', 'ring-indigo-400');
+      });
+      wrapper.addEventListener('drop', (e) => {
+        if (!onReorderPages) return;
+        e.preventDefault();
+        if (!wrapper) return;
+        wrapper.classList.remove('ring-2', 'ring-indigo-400');
+        const from = dragFrom;
+        const to = n;
+        dragFrom = null;
+        if (from == null || to == null || from === to) return;
+        const fromIdx = pages.indexOf(from);
+        const toIdx = pages.indexOf(to);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const next = pages.slice();
+        const [moved] = next.splice(fromIdx, 1);
+        next.splice(toIdx, 0, moved);
+        onReorderPages(next);
+      });
       const placeholder = document.createElement("div");
       placeholder.className = "bg-gray-100 rounded border border-gray-200";
       placeholder.style.width = "120px";
@@ -100,7 +144,12 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
         btn.title = 'Delete page';
         btn.className = 'text-xs text-red-600 hover:text-red-700 px-1 py-0.5 rounded';
         btn.innerText = 'Delete';
-        btn.onclick = (e) => { e.stopPropagation(); onDeletePage(n); };
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          if (!onDeletePage) return;
+          const ok = window.confirm(`Delete page ${n}? You can restore it later.`);
+          if (ok) onDeletePage(n);
+        };
         row.appendChild(btn);
       }
       wrapper.appendChild(row);
@@ -110,7 +159,7 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
       io.disconnect();
       if (container) container.innerHTML = "";
     };
-  }, [pdfDoc, pages, onSelectPage, thumbScale, onDeletePage]);
+  }, [pdfDoc, pages, onSelectPage, thumbScale, onDeletePage, onReorderPages]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -123,10 +172,48 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
   }, [currentPage]);
 
   return (
-    <aside className="w-40 shrink-0 h-[calc(100vh-150px)] overflow-auto bg-white rounded-lg shadow-md p-2">
+    <aside className="w-48 shrink-0 h-[calc(100vh-150px)] overflow-auto bg-white rounded-lg shadow-md p-2">
+      <div className="text-xs text-gray-500 px-1 pb-1">Pages</div>
       <div ref={containerRef} className="grid gap-2">
         {/* thumbnails injected here */}
       </div>
+      {hiddenPages.length > 0 && (
+        <div className="mt-3 border-t pt-2">
+          <div className="text-xs text-gray-500 px-1 pb-1">Trash</div>
+          <div className="flex flex-col gap-1 max-h-40 overflow-auto pr-1">
+            {hiddenPages.map((p) => (
+              <label key={p} className="flex items-center gap-2 text-xs text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={selectedHidden.has(p)}
+                  onChange={(e) => {
+                    setSelectedHidden((prev) => {
+                      const next = new Set(prev);
+                      if (e.target.checked) next.add(p);
+                      else next.delete(p);
+                      return next;
+                    });
+                  }}
+                />
+                <span>Page {p}</span>
+              </label>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="mt-2 w-full rounded bg-indigo-600 text-white text-xs py-1 disabled:opacity-50"
+            disabled={!onRestorePagesAtEnd || selectedHidden.size === 0}
+            onClick={() => {
+              if (!onRestorePagesAtEnd) return;
+              const pages = Array.from(selectedHidden.values()).sort((a, b) => a - b);
+              onRestorePagesAtEnd(pages);
+              setSelectedHidden(new Set());
+            }}
+          >
+            Restore Selected to End
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

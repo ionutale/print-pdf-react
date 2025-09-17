@@ -26,6 +26,13 @@ export default function PdfViewer() {
   const [isLoading, setIsLoading] = useState(false);
   const [tool, setTool] = useState<Tool>("select");
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [fileKey, setFileKey] = useState<string | null>(null);
+  const [thumbScale, setThumbScale] = useState<number>(20);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [strokeColor, setStrokeColor] = useState<string>("#ef4444");
+  const [lineWidth, setLineWidth] = useState<number>(2);
+  const [textSize, setTextSize] = useState<number>(14);
+  const [snap, setSnap] = useState<boolean>(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const printContainerRef = useRef<HTMLDivElement | null>(null);
@@ -44,7 +51,7 @@ export default function PdfViewer() {
         const ctx = canvas.getContext("2d")!;
         canvas.height = viewport.height;
         canvas.width = viewport.width;
-        const renderTask = page.render({ canvasContext: ctx, viewport });
+  const renderTask = page.render({ canvasContext: ctx, viewport });
         renderTask.promise.then(() => {
           setPageRendering(false);
           if (pageNumPending !== null) {
@@ -90,7 +97,8 @@ export default function PdfViewer() {
     for (let num = 1; num <= pdfDoc.numPages; num++) {
       // eslint-disable-next-line no-await-in-loop
       const page = await pdfDoc.getPage(num);
-      const viewport = page.getViewport({ scale: 2 });
+      const printScale = 2;
+      const viewport = page.getViewport({ scale: printScale });
       const c = document.createElement("canvas");
       c.className = "print-page";
       c.width = viewport.width;
@@ -98,6 +106,35 @@ export default function PdfViewer() {
       const cctx = c.getContext("2d")!;
       // eslint-disable-next-line no-await-in-loop
       await page.render({ canvasContext: cctx, viewport }).promise;
+      // draw annotations for this page
+      const ratio = printScale / 1.5; // screen scale is 1.5
+      annotations.filter((a) => a.page === num).forEach((a) => {
+        if (a.type === "text") {
+          cctx.fillStyle = a.color;
+          const size = ("size" in a && a.size ? a.size : textSize) as number;
+          cctx.font = `${size * ratio}px Inter, system-ui, -apple-system, sans-serif`;
+          cctx.fillText(a.text, a.x * ratio, a.y * ratio);
+        } else if (a.type === "image") {
+          const img = new Image();
+          img.src = a.src;
+          img.onload = () => {
+            cctx.drawImage(img, a.x * ratio, a.y * ratio, a.w * ratio, a.h * ratio);
+          };
+        } else {
+          cctx.strokeStyle = a.color;
+          const stroke = ("stroke" in a && a.stroke ? a.stroke : lineWidth) as number;
+          cctx.lineWidth = stroke * ratio;
+          if (a.type === "rect") {
+            cctx.strokeRect(a.x * ratio, a.y * ratio, a.w * ratio, a.h * ratio);
+          } else if (a.type === "ellipse") {
+            const cx = a.x * ratio + (a.w * ratio) / 2;
+            const cy = a.y * ratio + (a.h * ratio) / 2;
+            cctx.beginPath();
+            cctx.ellipse(cx, cy, (a.w * ratio) / 2, (a.h * ratio) / 2, 0, 0, Math.PI * 2);
+            cctx.stroke();
+          }
+        }
+      });
       container.appendChild(c);
     }
     requestAnimationFrame(() => window.print());
@@ -142,12 +179,34 @@ export default function PdfViewer() {
     const reader = new FileReader();
     setIsLoading(true);
     reader.onload = function () {
-      const pdfData = new Uint8Array(this.result as ArrayBuffer);
+      const arrayBuffer = this.result as ArrayBuffer;
+      const pdfData = new Uint8Array(arrayBuffer);
+      // compute file fingerprint
+      crypto.subtle.digest("SHA-256", arrayBuffer).then((hashBuf) => {
+        const hashArr = Array.from(new Uint8Array(hashBuf));
+        const hash = hashArr.map((b) => b.toString(16).padStart(2, "0")).join("");
+        setFileKey(hash);
+        localStorage.setItem("pdf:last", hash);
+      });
       const loadingTask = window.pdfjsLib.getDocument(pdfData);
       loadingTask.promise
         .then((pdf: any) => {
           setPdfDoc(pdf);
-          setPageNum(1);
+          // try restore
+          let restored = false;
+          try {
+            const key = (window as any).pendingPdfHash || fileKey;
+            const raw = key ? localStorage.getItem(`pdf:${key}`) : null;
+            if (raw) {
+              const saved = JSON.parse(raw) as { page?: number; annotations?: Annotation[] };
+              if (saved.page) setPageNum(saved.page);
+              if (saved.annotations) setAnnotations(saved.annotations);
+              restored = true;
+            }
+          } catch {
+            /* noop */
+          }
+          if (!restored) setPageNum(1);
           setIsLoading(false);
           queueRenderPage(1);
         })
@@ -160,6 +219,95 @@ export default function PdfViewer() {
     };
     reader.readAsArrayBuffer(file);
   };
+  // keyboard: delete / backspace to remove selected, copy/paste, z-order
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!selectedId) return;
+      if (e.key === "Delete" || e.key === "Backspace") {
+        setAnnotations((prev) => prev.filter((a) => a.id !== selectedId));
+        setSelectedId(null);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "c") {
+        const a = annotations.find((x) => x.id === selectedId);
+        if (a) localStorage.setItem("pdf:clip", JSON.stringify(a));
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v") {
+        const raw = localStorage.getItem("pdf:clip");
+        if (raw) {
+          try {
+            const a = JSON.parse(raw) as Annotation;
+            const id = crypto.randomUUID();
+            const dupe = { ...a, id, x: a.x + 10, y: a.y + 10, page: pageNum } as Annotation;
+            setAnnotations((prev) => prev.concat(dupe));
+            setSelectedId(id);
+          } catch {}
+        }
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "]") {
+        // bring to front
+        setAnnotations((prev) => {
+          const idx = prev.findIndex((x) => x.id === selectedId);
+          if (idx < 0) return prev;
+          const arr = prev.slice();
+          const [it] = arr.splice(idx, 1);
+          arr.push(it);
+          return arr;
+        });
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "[") {
+        // send to back
+        setAnnotations((prev) => {
+          const idx = prev.findIndex((x) => x.id === selectedId);
+          if (idx < 0) return prev;
+          const arr = prev.slice();
+          const [it] = arr.splice(idx, 1);
+          arr.unshift(it);
+          return arr;
+        });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedId, annotations, pageNum]);
+
+  // Apply toolbar style changes to currently selected annotation
+  React.useEffect(() => {
+    if (!selectedId) return;
+    setAnnotations((prev) =>
+      prev.map((a) => {
+        if (a.id !== selectedId) return a;
+        if (a.type === "text") return { ...a, color: strokeColor, size: textSize } as any;
+        if (a.type === "rect" || a.type === "ellipse") return { ...a, color: strokeColor, stroke: lineWidth } as any;
+        return a;
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [strokeColor, lineWidth, textSize, selectedId]);
+
+  const onExport = () => {
+    const data = JSON.stringify({ annotations, page: pageNum }, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `annotations-${fileKey?.slice(0, 8) ?? "session"}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  const onImport = (json: string) => {
+    try {
+      const data = JSON.parse(json) as { annotations?: Annotation[]; page?: number };
+      if (data.annotations) setAnnotations(data.annotations);
+      if (typeof data.page === "number") setPageNum(data.page);
+    } catch {}
+  };
+
+  // persist annotations and page when they change
+  React.useEffect(() => {
+    if (!fileKey) return;
+    const payload = JSON.stringify({ page: pageNum, annotations });
+    try {
+      localStorage.setItem(`pdf:${fileKey}`, payload);
+    } catch {
+      // ignore quota errors
+    }
+  }, [annotations, pageNum, fileKey]);
 
   const pageLabel = updatePageLabel();
   const controlsVisible = !!pdfDoc && !isLoading;
@@ -193,19 +341,48 @@ export default function PdfViewer() {
             />
           </div>
           <div className="mt-3">
-            <Toolbar tool={tool} setTool={setTool} onImagePick={addImageAnnotation} onClearPage={clearCurrentPageAnnotations} />
+            <Toolbar
+              tool={tool}
+              setTool={setTool}
+              onImagePick={addImageAnnotation}
+              onClearPage={clearCurrentPageAnnotations}
+              color={strokeColor}
+              setColor={setStrokeColor}
+              lineWidth={lineWidth}
+              setLineWidth={setLineWidth}
+              textSize={textSize}
+              setTextSize={setTextSize}
+              snap={snap}
+              setSnap={setSnap}
+              onExport={onExport}
+              onImport={onImport}
+            />
           </div>
         </div>
           <div className="flex gap-4">
-          <ThumbnailsSidebar
-            pdfDoc={pdfDoc}
-            currentPage={pageNum}
-            onSelectPage={(n) => {
-              if (!pdfDoc) return;
-              setPageNum(n);
-              queueRenderPage(n);
-            }}
-          />
+          <div className="flex flex-col gap-2">
+            <div className="bg-white rounded-lg shadow p-2 text-xs text-gray-600">
+              Thumb scale
+              <input
+                type="range"
+                min={10}
+                max={40}
+                value={thumbScale}
+                onChange={(e) => setThumbScale(parseInt(e.target.value))}
+                className="w-36 ml-2 align-middle"
+              />
+            </div>
+            <ThumbnailsSidebar
+              pdfDoc={pdfDoc}
+              currentPage={pageNum}
+              onSelectPage={(n) => {
+                if (!pdfDoc) return;
+                setPageNum(n);
+                queueRenderPage(n);
+              }}
+              thumbScale={thumbScale}
+            />
+          </div>
             <div
               id="pdf-viewer"
               className="relative bg-white p-4 rounded-lg shadow-md flex justify-center items-center h-[calc(100vh-150px)] grow"
@@ -233,7 +410,20 @@ export default function PdfViewer() {
               <PdfCanvas ref={canvasRef} hidden={!pdfDoc || isLoading} />
               <Loader hidden={!isLoading} />
               {pdfDoc && !isLoading && (
-                <AnnotationOverlay tool={tool} page={pageNum} annotations={annotations} setAnnotations={setAnnotations} canvasRef={canvasRef} />
+                <AnnotationOverlay
+                  tool={tool}
+                  page={pageNum}
+                  annotations={annotations}
+                  setAnnotations={setAnnotations}
+                  canvasRef={canvasRef}
+                  selectedId={selectedId}
+                  setSelectedId={setSelectedId}
+                  snapEnabled={snap}
+                  snapSize={8}
+                  defaultColor={strokeColor}
+                  defaultStroke={lineWidth}
+                  defaultTextSize={textSize}
+                />
               )}
             </div>
         </div>

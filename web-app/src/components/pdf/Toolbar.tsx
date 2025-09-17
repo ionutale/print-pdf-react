@@ -8,9 +8,19 @@ type Props = {
   setTool: (t: Tool) => void;
   onImagePick: (file: File | null) => void;
   onClearPage: () => void;
+  color?: string;
+  setColor?: (c: string) => void;
+  lineWidth?: number;
+  setLineWidth?: (w: number) => void;
+  textSize?: number;
+  setTextSize?: (s: number) => void;
+  snap?: boolean;
+  setSnap?: (v: boolean) => void;
+  onExport?: () => void;
+  onImport?: (json: string) => void;
 };
 
-export default function Toolbar({ tool, setTool, onImagePick, onClearPage }: Props) {
+export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color, setColor, lineWidth, setLineWidth, textSize, setTextSize, snap, setSnap, onExport, onImport }: Props) {
   const btn = (t: Tool, label: string) => (
     <button
       type="button"
@@ -47,6 +57,28 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage }: Pro
       >
         Clear Page
       </button>
+      <div className="ml-4 flex items-center gap-2">
+        <label className="text-xs text-gray-600">Color</label>
+        <input type="color" value={color} onChange={(e) => setColor?.(e.target.value)} />
+        <label className="text-xs text-gray-600">Stroke</label>
+        <input type="number" min={1} max={12} value={lineWidth} onChange={(e) => setLineWidth?.(parseInt(e.target.value))} className="w-16" />
+        <label className="text-xs text-gray-600">Text</label>
+        <input type="number" min={10} max={48} value={textSize} onChange={(e) => setTextSize?.(parseInt(e.target.value))} className="w-16" />
+        <label className="text-xs text-gray-600">Snap</label>
+        <input type="checkbox" checked={!!snap} onChange={(e) => setSnap?.(e.target.checked)} />
+      </div>
+      <div className="ml-4 flex items-center gap-2">
+        <button type="button" className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50" onClick={onExport}>Export</button>
+        <label className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50 cursor-pointer">
+          Import
+          <input type="file" accept="application/json" className="hidden" onChange={async (e) => {
+            const f = e.target.files?.[0];
+            if (!f) return;
+            const text = await f.text();
+            onImport?.(text);
+          }} />
+        </label>
+      </div>
     </div>
   );
 }

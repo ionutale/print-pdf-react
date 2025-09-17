@@ -5,9 +5,10 @@ type Props = {
   pdfDoc: any | null;
   currentPage: number;
   onSelectPage: (pageNum: number) => void;
+  thumbScale?: number; // percentage, default 20
 };
 
-export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage }: Props) {
+export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, thumbScale = 20 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const pages = useMemo(() => {
@@ -22,7 +23,7 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage }:
       const existing = container.querySelector<HTMLCanvasElement>(`canvas[data-page="${num}"]`);
       if (existing) return; // already rendered
       const page = await pdfDoc.getPage(num);
-      const viewport = page.getViewport({ scale: 0.2 });
+      const viewport = page.getViewport({ scale: (thumbScale || 20) / 100 });
       const c = document.createElement("canvas");
       c.dataset.page = String(num);
       c.width = viewport.width;
@@ -40,11 +41,43 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage }:
       wrapper.appendChild(label);
       container.appendChild(wrapper);
     };
-    pages.forEach((n) => void renderThumb(n));
+    // lazy render using IntersectionObserver
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const el = entry.target as HTMLDivElement;
+            const page = Number(el.dataset.page);
+            void renderThumb(page);
+            io.unobserve(el);
+          }
+        });
+      },
+      { root: container, rootMargin: "200px" }
+    );
+    // create placeholder wrappers for lazy loading
+    pages.forEach((n) => {
+      const existingWrapper = container.querySelector(`div[data-page="${n}"]`);
+      if (existingWrapper) return;
+      const wrapper = document.createElement("div");
+      wrapper.dataset.page = String(n);
+      wrapper.className = "p-2 flex flex-col items-center gap-1 animate-pulse";
+      const placeholder = document.createElement("div");
+      placeholder.className = "bg-gray-100 rounded border border-gray-200";
+      placeholder.style.width = "120px";
+      placeholder.style.height = "160px";
+      wrapper.appendChild(placeholder);
+      const label = document.createElement("div");
+      label.textContent = String(n);
+      label.className = "text-xs text-gray-600 mt-1";
+      wrapper.appendChild(label);
+      container.appendChild(wrapper);
+      io.observe(wrapper);
+    });
     return () => {
       if (container) container.innerHTML = "";
     };
-  }, [pdfDoc, pages, onSelectPage]);
+  }, [pdfDoc, pages, onSelectPage, thumbScale]);
 
   useEffect(() => {
     const container = containerRef.current;

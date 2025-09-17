@@ -181,19 +181,7 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
         <input type="checkbox" checked={!!snap} onChange={(e) => setSnap?.(e.target.checked)} />
       </div>
       <div className="ml-4 flex items-center gap-2">
-        <button type="button" className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700 inline-flex items-center gap-1" onClick={onExport}>
-          <Icon name="export" /> <span>Export</span>
-        </button>
-        <label className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700 cursor-pointer inline-flex items-center gap-1">
-          <Icon name="import" /> <span>Import</span>
-          <input type="file" accept="application/json" className="hidden" onChange={async (e) => {
-            const f = e.target.files?.[0];
-            if (!f) return;
-            const text = await f.text();
-            onImport?.(text);
-          }} />
-        </label>
-        <div className="ml-2 text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-1">
+        <div className="ml-0 text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-1">
           <span>Theme</span>
           <select
             value={theme}

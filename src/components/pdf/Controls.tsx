@@ -11,6 +11,8 @@ type Props = {
   disableSave?: boolean;
   fitMode?: 'page' | 'width' | '100%';
   onChangeFitMode?: (m: 'page' | 'width' | '100%') => void;
+  fileName?: string;
+  onChangeFileName?: (v: string) => void;
   onPrev: () => void;
   onNext: () => void;
   onPrint: () => void;
@@ -32,6 +34,8 @@ export default function Controls({
   disableSave,
   fitMode,
   onChangeFitMode,
+  fileName,
+  onChangeFileName,
   onPrev,
   onNext,
   onPrint,
@@ -44,24 +48,7 @@ export default function Controls({
 }: Props) {
   return (
     <div id="pdf-controls" className={(visible ? "flex" : "hidden") + " items-center gap-4"}>
-      {onUndo && (
-        <button
-          className="px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={onUndo}
-          disabled={!!disableUndo}
-        >
-          Undo
-        </button>
-      )}
-      {onRedo && (
-        <button
-          className="px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={onRedo}
-          disabled={!!disableRedo}
-        >
-          Redo
-        </button>
-      )}
+      {/* Undo/Redo moved to History sidebar header */}
       <button
         id="prev-page"
         className="px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -122,6 +109,15 @@ export default function Controls({
           </svg>
           Save
         </button>
+      )}
+      {onChangeFileName && (
+        <input
+          type="text"
+          placeholder="File name"
+          value={fileName}
+          onChange={(e) => onChangeFileName?.(e.target.value)}
+          className="ml-2 text-sm border rounded px-2 py-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100"
+        />
       )}
       <button
         id="open-native"

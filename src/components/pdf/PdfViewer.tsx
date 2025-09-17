@@ -49,6 +49,12 @@ export default function PdfViewer() {
     if (typeof window === 'undefined') return 'page';
     return (localStorage.getItem('fitMode') as any) || 'page';
   });
+  const [leftOpen, setLeftOpen] = useState(true);
+  const [rightOpen, setRightOpen] = useState(true);
+  const [fileName, setFileName] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('save:fileName') || '';
+  });
 
   const updatePageLabel = () => {
     const total = visiblePages ? visiblePages.length : (pdfDoc?.numPages ?? 0);
@@ -153,6 +159,11 @@ export default function PdfViewer() {
     if (typeof window === 'undefined') return;
     localStorage.setItem('fitMode', fitMode);
   }, [fitMode]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('save:fileName', fileName);
+  }, [fileName]);
 
   const onPrint = async () => {
     if (!pdfDoc || !printContainerRef.current) return;
@@ -396,7 +407,9 @@ export default function PdfViewer() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `edited-${fileKey?.slice(0, 8) ?? "document"}.pdf`;
+    const customName = (typeof window !== 'undefined' ? localStorage.getItem('save:fileName') : null) || '';
+    const safeName = customName.trim() || `edited-${fileKey?.slice(0, 8) ?? "document"}`;
+    a.download = `${safeName}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -731,9 +744,18 @@ export default function PdfViewer() {
           </div>
         </div>
           <div className="flex gap-4 flex-1 min-h-0">
-          <div className="flex flex-col gap-2 w-[180px] min-w-[180px] shrink-0 overflow-hidden">
+          <div className={`flex flex-col gap-2 ${leftOpen ? 'w-[180px] min-w-[180px]' : 'w-0 min-w-0'} transition-[width] duration-300 shrink-0 overflow-hidden`}>
             <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-2 text-xs text-gray-600 dark:text-gray-300 shrink-0">
-              Thumb scale
+              <div className="flex items-center justify-between">
+                <span>Thumb scale</span>
+                <button
+                  type="button"
+                  className="text-xs text-gray-600 dark:text-gray-300 hover:underline"
+                  onClick={() => setLeftOpen((v) => !v)}
+                >
+                  {leftOpen ? 'Hide' : 'Show'}
+                </button>
+              </div>
               <input
                 type="range"
                 min={10}
@@ -807,8 +829,25 @@ export default function PdfViewer() {
                 />
               )}
             </div>
-            <div className="w-[220px] min-w-[220px] shrink-0 bg-white dark:bg-gray-900 rounded-lg shadow p-2 overflow-auto">
-              <HistorySidebar history={history} historyIndex={historyIndex} />
+            <div className={`${rightOpen ? 'w-[220px] min-w-[220px]' : 'w-0 min-w-0'} transition-[width] duration-300 shrink-0 bg-white dark:bg-gray-900 rounded-lg shadow p-2 overflow-auto`}
+            >
+              <div className="flex items-center justify-end pb-1">
+                <button
+                  type="button"
+                  className="text-xs text-gray-600 dark:text-gray-300 hover:underline"
+                  onClick={() => setRightOpen((v) => !v)}
+                >
+                  {rightOpen ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              <HistorySidebar
+                history={history}
+                historyIndex={historyIndex}
+                onUndo={undo}
+                onRedo={redo}
+                disableUndo={historyIndex < 0}
+                disableRedo={historyIndex >= history.length - 1}
+              />
             </div>
         </div>
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-3 sm:p-4 mt-3 shrink-0">
@@ -821,6 +860,8 @@ export default function PdfViewer() {
             disableSave={!pdfDoc}
             fitMode={fitMode}
             onChangeFitMode={setFitMode}
+            fileName={fileName}
+            onChangeFileName={setFileName}
             onPrev={onPrevPage}
             onNext={onNextPage}
             onPrint={onPrint}

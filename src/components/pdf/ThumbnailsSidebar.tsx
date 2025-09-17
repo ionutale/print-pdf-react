@@ -182,7 +182,7 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
   }, [currentPage]);
 
   return (
-    <aside className="w-48 shrink-0 h-[calc(100vh-200px)] overflow-auto bg-white rounded-lg shadow-md p-2">
+    <aside className="w-48 shrink-0 h-[calc(100%-200px)] overflow-auto bg-white rounded-lg shadow-md p-2">
       <div className="text-xs text-gray-500 px-1 pb-1">Pages</div>
       <div ref={containerRef} className="grid gap-2">
         {/* thumbnails injected here */}

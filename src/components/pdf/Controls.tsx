@@ -8,10 +8,12 @@ type Props = {
   disableNext: boolean;
   disablePrint: boolean;
   disableOpen?: boolean;
+  disableSave?: boolean;
   onPrev: () => void;
   onNext: () => void;
   onPrint: () => void;
   onOpen?: () => void;
+  onSave?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
   disableUndo?: boolean;
@@ -25,10 +27,12 @@ export default function Controls({
   disableNext,
   disablePrint,
   disableOpen,
+  disableSave,
   onPrev,
   onNext,
   onPrint,
   onOpen,
+  onSave,
   onUndo,
   onRedo,
   disableUndo,
@@ -88,6 +92,19 @@ export default function Controls({
         </svg>
         Print
       </button>
+      {onSave && (
+        <button
+          id="save-pdf"
+          className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={onSave}
+          disabled={!!disableSave}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V7.414a2 2 0 00-.586-1.414l-3.414-3.414A2 2 0 0012.586 2H4zm2 3a1 1 0 011-1h6a1 1 0 011 1v3H6V6zm0 5h8v4H6v-4z" />
+          </svg>
+          Save
+        </button>
+      )}
       <button
         id="open-native"
         className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"

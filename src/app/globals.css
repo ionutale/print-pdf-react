@@ -2,8 +2,6 @@
 @plugin "daisyui";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
   --font-inter: var(--font-inter);
   --font-dancing-script: var(--font-dancing-script);
   --font-great-vibes: var(--font-great-vibes);
@@ -12,19 +10,6 @@
   --font-caveat: var(--font-caveat);
   --font-kalam: var(--font-kalam);
   --font-permanent-marker: var(--font-permanent-marker);
-}
-
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
 }
 
 /* PDF Viewer custom styles */

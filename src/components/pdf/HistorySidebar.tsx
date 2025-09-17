@@ -18,22 +18,28 @@ export default function HistorySidebar({ history, historyIndex, onUndo, onRedo, 
         <div className="flex items-center gap-1">
           {onUndo && (
             <button
-              className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded disabled:opacity-50"
+              className="btn btn-xs btn-ghost"
               onClick={onUndo}
               disabled={!!disableUndo}
               title="Undo"
             >
-              Undo
+              <span className="inline-flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3"><path fillRule="evenodd" d="M7.78 4.72a.75.75 0 010 1.06L5.56 8l2.22 2.22a.75.75 0 11-1.06 1.06l-3-3a.75.75 0 010-1.06l3-3a.75.75 0 011.06 0z" clipRule="evenodd"/><path fillRule="evenodd" d="M3.75 8a.75.75 0 01.75-.75h6.5a3.75 3.75 0 110 7.5H6.5a.75.75 0 010-1.5h4.5a2.25 2.25 0 100-4.5H4.5A.75.75 0 013.75 8z" clipRule="evenodd"/></svg>
+                Undo
+              </span>
             </button>
           )}
           {onRedo && (
             <button
-              className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded disabled:opacity-50"
+              className="btn btn-xs btn-ghost"
               onClick={onRedo}
               disabled={!!disableRedo}
               title="Redo"
             >
-              Redo
+              <span className="inline-flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3"><path fillRule="evenodd" d="M12.22 4.72a.75.75 0 010 1.06L10 8l2.22 2.22a.75.75 0 11-1.06 1.06l-3-3a.75.75 0 010-1.06l3-3a.75.75 0 011.06 0z" clipRule="evenodd"/><path fillRule="evenodd" d="M16.25 8a.75.75 0 00-.75-.75h-6.5a3.75 3.75 0 000 7.5h4.25a.75.75 0 000-1.5H8.5a2.25 2.25 0 010-4.5h7A.75.75 0 0016.25 8z" clipRule="evenodd"/></svg>
+                Redo
+              </span>
             </button>
           )}
         </div>

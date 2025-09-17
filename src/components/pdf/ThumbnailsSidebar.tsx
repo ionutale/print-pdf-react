@@ -183,7 +183,7 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
 
   return (
     <aside className="w-48 shrink-0 h-[calc(100%-200px)] overflow-auto bg-white dark:bg-gray-900 rounded-lg shadow-md p-2">
-      <div className="text-xs text-gray-500 dark:text-gray-300 px-1 pb-1">Pages</div>
+  <div className="text-xs text-gray-500 dark:text-gray-300 px-1 pb-1">Pages</div>
       <div ref={containerRef} className="grid gap-2">
         {/* thumbnails injected here */}
       </div>
@@ -193,14 +193,14 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
           <div className="flex gap-1 mb-1">
             <button
               type="button"
-              className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-2 py-1 rounded"
+              className="btn btn-xs btn-ghost"
               onClick={() => setSelectedHidden(new Set(hiddenPages))}
             >
               Select All
             </button>
             <button
               type="button"
-              className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-2 py-1 rounded"
+              className="btn btn-xs btn-ghost"
               onClick={() => setSelectedHidden(new Set())}
             >
               Clear
@@ -227,7 +227,7 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
           </div>
           <div className="mt-2 flex gap-1">
             <select
-              className="text-xs border rounded px-1 py-1 flex-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100"
+              className="select select-xs select-bordered flex-1"
               value={restorePosition}
               onChange={(e) => setRestorePosition(Number(e.target.value))}
             >
@@ -240,7 +240,7 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
             </select>
             <button
               type="button"
-              className="rounded bg-indigo-600 text-white text-xs py-1 px-2 disabled:opacity-50"
+              className="btn btn-xs btn-primary"
               disabled={!onRestorePagesAtPosition || selectedHidden.size === 0}
               onClick={() => {
                 if (!onRestorePagesAtPosition) return;

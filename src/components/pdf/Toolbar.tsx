@@ -32,6 +32,8 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
       const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       const isDark = mode === 'dark' || (mode === 'system' && prefersDark);
       root.classList.toggle('dark', isDark);
+      // DaisyUI theme dataset
+      (root as HTMLElement).setAttribute('data-theme', isDark ? 'dim' : 'cupcake');
     };
     apply(theme);
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -107,12 +109,7 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
     <button
       type="button"
       onClick={() => setTool(t)}
-      className={
-        "px-3 py-1 rounded-md border " +
-        (tool === t
-          ? "bg-indigo-600 text-white border-indigo-600"
-          : "bg-white text-gray-800 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700")
-      }
+      className={`btn btn-sm ${tool === t ? 'btn-primary' : 'btn-ghost'}`}
       aria-pressed={tool === t}
     >
       <span className="inline-flex items-center gap-1"><Icon name={t} /> <span>{label}</span></span>
@@ -125,7 +122,7 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
       {btn("text", "Text")}
       {btn("rect", "Rectangle")}
       {btn("ellipse", "Ellipse")}
-      <label className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700 cursor-pointer inline-flex items-center gap-1">
+      <label className="btn btn-sm btn-ghost cursor-pointer inline-flex items-center gap-1">
         <Icon name="image" /> <span>Image</span>
         <input
           type="file"
@@ -137,7 +134,7 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
       <button
         type="button"
         onClick={onClearPage}
-        className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700 inline-flex items-center gap-1"
+        className="btn btn-sm btn-outline inline-flex items-center gap-1"
       >
         <Icon name="trash" /> <span>Clear Page</span>
       </button>
@@ -151,17 +148,17 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path d="M3.5 10a.75.75 0 0 1 .75-.75h11.5a.75.75 0 0 1 0 1.5H4.25A.75.75 0 0 1 3.5 10Z" /></svg>
           <span>Stroke</span>
         </label>
-  <input type="number" min={1} max={12} value={lineWidth} onChange={(e) => setLineWidth?.(parseInt(e.target.value))} className="w-16 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded px-1" />
+  <input type="number" min={1} max={12} value={lineWidth} onChange={(e) => setLineWidth?.(parseInt(e.target.value))} className="w-16 input input-sm input-bordered" />
   <label className="text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-1" title="Text Size">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path d="M3.5 5.25A.75.75 0 0 1 4.25 4.5h11.5a.75.75 0 0 1 0 1.5h-5v9.25a.75.75 0 0 1-1.5 0V6h-5.5a.75.75 0 0 1-.75-.75Z" /></svg>
           <span>Text</span>
         </label>
-  <input type="number" min={10} max={48} value={textSize} onChange={(e) => setTextSize?.(parseInt(e.target.value))} className="w-16 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded px-1" />
+  <input type="number" min={10} max={48} value={textSize} onChange={(e) => setTextSize?.(parseInt(e.target.value))} className="w-16 input input-sm input-bordered" />
   <label className="text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-1" title="Font Family">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path d="M3.5 4.75A.75.75 0 0 1 4.25 4h11.5a.75.75 0 0 1 0 1.5h-4.5v10a.75.75 0 0 1-1.5 0v-10h-5.5A.75.75 0 0 1 3.5 4.75Z" /></svg>
           <span>Font</span>
         </label>
-  <select value={fontFamily} onChange={(e) => setFontFamily?.(e.target.value)} className="text-xs border rounded px-2 py-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100">
+  <select value={fontFamily} onChange={(e) => setFontFamily?.(e.target.value)} className="select select-sm select-bordered">
           <option value="Inter">Inter (Default)</option>
           <option value="Arial">Arial</option>
           <option value="Times New Roman">Times New Roman</option>

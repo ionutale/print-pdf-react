@@ -49,8 +49,16 @@ export default function PdfViewer() {
     if (typeof window === 'undefined') return 'page';
     return (localStorage.getItem('fitMode') as any) || 'page';
   });
-  const [leftOpen, setLeftOpen] = useState(true);
-  const [rightOpen, setRightOpen] = useState(true);
+  const [leftOpen, setLeftOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const v = localStorage.getItem('ui:leftOpen');
+    return v == null ? true : v === '1';
+  });
+  const [rightOpen, setRightOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const v = localStorage.getItem('ui:rightOpen');
+    return v == null ? true : v === '1';
+  });
   const [fileName, setFileName] = useState<string>(() => {
     if (typeof window === 'undefined') return '';
     return localStorage.getItem('save:fileName') || '';
@@ -223,6 +231,15 @@ export default function PdfViewer() {
     };
     window.addEventListener("afterprint", cleanup);
   };
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('ui:leftOpen', leftOpen ? '1' : '0');
+  }, [leftOpen]);
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('ui:rightOpen', rightOpen ? '1' : '0');
+  }, [rightOpen]);
 
   const onSavePdf = async () => {
     if (!pdfDoc) return;
@@ -750,10 +767,18 @@ export default function PdfViewer() {
                 <span>Thumb scale</span>
                 <button
                   type="button"
-                  className="text-xs text-gray-600 dark:text-gray-300 hover:underline"
+                  className="btn btn-xs btn-ghost"
                   onClick={() => setLeftOpen((v) => !v)}
+                  title={leftOpen ? 'Hide thumbnails' : 'Show thumbnails'}
                 >
-                  {leftOpen ? 'Hide' : 'Show'}
+                  <span className="inline-flex items-center gap-1">
+                    {leftOpen ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3"><path d="M4 5.75A.75.75 0 0 1 4.75 5h10.5a.75.75 0 0 1 0 1.5H4.75A.75.75 0 0 1 4 5.75Zm0 4.25c0-.414.336-.75.75-.75h10.5a.75.75 0 0 1 0 1.5H4.75a.75.75 0 0 1-.75-.75Zm.75 3.5a.75.75 0 0 0 0 1.5h10.5a.75.75 0 0 0 0-1.5H4.75Z"/></svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3"><path d="M7 4a3 3 0 0 0-3 3v6a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Z"/></svg>
+                    )}
+                    {leftOpen ? 'Hide' : 'Show'}
+                  </span>
                 </button>
               </div>
               <input
@@ -834,10 +859,18 @@ export default function PdfViewer() {
               <div className="flex items-center justify-end pb-1">
                 <button
                   type="button"
-                  className="text-xs text-gray-600 dark:text-gray-300 hover:underline"
+                  className="btn btn-xs btn-ghost"
                   onClick={() => setRightOpen((v) => !v)}
+                  title={rightOpen ? 'Hide history' : 'Show history'}
                 >
-                  {rightOpen ? 'Hide' : 'Show'}
+                  <span className="inline-flex items-center gap-1">
+                    {rightOpen ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3"><path d="M4 5.75A.75.75 0 0 1 4.75 5h10.5a.75.75 0 0 1 0 1.5H4.75A.75.75 0 0 1 4 5.75Zm0 4.25c0-.414.336-.75.75-.75h10.5a.75.75 0 0 1 0 1.5H4.75a.75.75 0 0 1-.75-.75Zm.75 3.5a.75.75 0 0 0 0 1.5h10.5a.75.75 0 0 0 0-1.5H4.75Z"/></svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3"><path d="M7 4a3 3 0 0 0-3 3v6a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Z"/></svg>
+                    )}
+                    {rightOpen ? 'Hide' : 'Show'}
+                  </span>
                 </button>
               </div>
               <HistorySidebar

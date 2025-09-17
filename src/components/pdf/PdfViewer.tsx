@@ -63,6 +63,11 @@ export default function PdfViewer() {
     if (typeof window === 'undefined') return '';
     return localStorage.getItem('save:fileName') || '';
   });
+  const [showHints, setShowHints] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const v = localStorage.getItem('ui:showHints');
+    return v == null ? true : v === '1';
+  });
 
   const updatePageLabel = () => {
     const total = visiblePages ? visiblePages.length : (pdfDoc?.numPages ?? 0);
@@ -518,6 +523,10 @@ export default function PdfViewer() {
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank");
   };
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('ui:showHints', showHints ? '1' : '0');
+  }, [showHints]);
   // keyboard: delete / backspace to remove selected, copy/paste, z-order
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -830,7 +839,7 @@ export default function PdfViewer() {
                   <Placeholder />
                   <div className="mt-4 flex flex-col sm:flex-row items-center gap-3 justify-center">
                     <FilePicker onChange={onFile} />
-                    <div className="text-xs text-gray-400">or drag & drop a PDF here</div>
+                    <div className="text-xs text-base-content/50">or drag & drop a PDF here</div>
                   </div>
                 </div>
               )}
@@ -852,6 +861,21 @@ export default function PdfViewer() {
                   defaultTextSize={textSize}
                   defaultFontFamily={fontFamily}
                 />
+              )}
+              {pdfDoc && !isLoading && (
+                <div className="absolute bottom-3 right-3">
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-outline"
+                    onClick={onOpenNative}
+                    title="Open current PDF in a new tab"
+                  >
+                    Open
+                  </button>
+                  {showHints && (
+                    <div className="mt-1 text-[11px] text-base-content/60 text-right">⌘+O</div>
+                  )}
+                </div>
               )}
             </div>
             <div className={`${rightOpen ? 'w-[220px] min-w-[220px]' : 'w-0 min-w-0'} transition-[width] duration-300 shrink-0 bg-white dark:bg-gray-900 rounded-lg shadow p-2 overflow-auto`}

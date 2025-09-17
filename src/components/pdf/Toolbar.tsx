@@ -36,8 +36,8 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
       const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       const isDark = mode === 'dark' || (mode === 'system' && prefersDark);
       root.classList.toggle('dark', isDark);
-      // DaisyUI theme dataset
-      (root as HTMLElement).setAttribute('data-theme', isDark ? 'dim' : 'cupcake');
+      // DaisyUI theme: set on <html> to match SSR
+      root.setAttribute('data-theme', isDark ? 'dim' : 'cupcake');
     };
     apply(theme);
     const mq = window.matchMedia('(prefers-color-scheme: dark)');

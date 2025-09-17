@@ -37,29 +37,29 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
       if (wrapper.querySelector('canvas')) return; // already rendered into this wrapper
       const page = await pdfDoc.getPage(num);
       const viewport = page.getViewport({ scale: (thumbScale || 20) / 100 });
-      const c = document.createElement("canvas");
+  const c = document.createElement("canvas");
       c.dataset.page = String(num);
       c.width = viewport.width;
       c.height = viewport.height;
       const ctx = c.getContext("2d")!;
       await page.render({ canvasContext: ctx, viewport }).promise;
-      c.className = "rounded border border-gray-200 shadow-sm cursor-pointer hover:ring-2 hover:ring-indigo-400";
+  c.className = "rounded border border-base-300 shadow-sm cursor-pointer hover:ring-2 hover:ring-primary/60 hover:shadow-md transition";
       c.onclick = () => onSelectPage(num);
       // replace placeholder content in-place
-      wrapper.className = "p-2 flex flex-col items-center gap-1";
+  wrapper.className = "p-2 flex flex-col items-center gap-1 hover:bg-base-200/60 rounded-md transition";
       wrapper.innerHTML = "";
       wrapper.appendChild(c);
       const row = document.createElement('div');
-      row.className = 'w-full flex items-center justify-between mt-1';
+  row.className = 'w-full flex items-center justify-between mt-1';
       const label = document.createElement("div");
       label.textContent = String(num);
-      label.className = "text-xs text-gray-600";
+  label.className = "text-xs text-base-content/70";
       row.appendChild(label);
       if (onDeletePage) {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.title = 'Delete page';
-        btn.className = 'text-xs text-red-600 hover:text-red-700 px-1 py-0.5 rounded flex items-center';
+  btn.className = 'text-xs text-error hover:opacity-90 px-1 py-0.5 rounded flex items-center';
         btn.innerHTML = `
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -97,7 +97,7 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
         wrapper.dataset.page = String(n);
         container.appendChild(wrapper);
       }
-      wrapper.className = "p-2 flex flex-col items-center gap-1 animate-pulse";
+  wrapper.className = "p-2 flex flex-col items-center gap-1 animate-pulse hover:bg-base-200/60 rounded-md transition";
       wrapper.innerHTML = "";
       wrapper.draggable = true;
       wrapper.addEventListener('dragstart', (e) => {
@@ -109,18 +109,18 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
         if (!onReorderPages) return;
         e.preventDefault();
         if (!wrapper) return;
-        wrapper.classList.add('ring-2', 'ring-indigo-400');
+        wrapper.classList.add('ring-2', 'ring-primary');
         if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
       });
       wrapper.addEventListener('dragleave', () => {
         if (!wrapper) return;
-        wrapper.classList.remove('ring-2', 'ring-indigo-400');
+        wrapper.classList.remove('ring-2', 'ring-primary');
       });
       wrapper.addEventListener('drop', (e) => {
         if (!onReorderPages) return;
         e.preventDefault();
         if (!wrapper) return;
-        wrapper.classList.remove('ring-2', 'ring-indigo-400');
+  wrapper.classList.remove('ring-2', 'ring-primary');
         const from = dragFrom;
         const to = n;
         dragFrom = null;
@@ -134,21 +134,21 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
         onReorderPages(next);
       });
       const placeholder = document.createElement("div");
-      placeholder.className = "bg-gray-100 rounded border border-gray-200";
+  placeholder.className = "bg-base-200 rounded border border-base-300";
       placeholder.style.width = "120px";
       placeholder.style.height = "160px";
       wrapper.appendChild(placeholder);
       const row = document.createElement('div');
-      row.className = 'w-full flex items-center justify-between mt-1';
+  row.className = 'w-full flex items-center justify-between mt-1';
       const label = document.createElement("div");
       label.textContent = String(n);
-      label.className = "text-xs text-gray-600";
+  label.className = "text-xs text-base-content/70";
       row.appendChild(label);
       if (onDeletePage) {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.title = 'Delete page';
-        btn.className = 'text-xs text-red-600 hover:text-red-700 px-1 py-0.5 rounded flex items-center';
+  btn.className = 'text-xs text-error hover:opacity-90 px-1 py-0.5 rounded flex items-center';
         btn.innerHTML = `
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -208,7 +208,7 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
           </div>
           <div className="flex flex-col gap-1 max-h-40 overflow-auto pr-1">
             {hiddenPages.map((p) => (
-              <label key={p} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+              <label key={p} className="flex items-center gap-2 text-xs text-base-content/70 hover:bg-base-200/60 rounded px-1 py-0.5 cursor-pointer transition">
                 <input
                   type="checkbox"
                   checked={selectedHidden.has(p)}
@@ -240,7 +240,7 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
             </select>
             <button
               type="button"
-              className="btn btn-xs btn-primary"
+              className="btn btn-xs btn-primary hover:brightness-95"
               disabled={!onRestorePagesAtPosition || selectedHidden.size === 0}
               onClick={() => {
                 if (!onRestorePagesAtPosition) return;

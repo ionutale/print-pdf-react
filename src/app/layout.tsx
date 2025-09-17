@@ -63,8 +63,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
-      <body data-theme="cupcake" className={`${inter.variable} ${dancingScript.variable} ${greatVibes.variable} ${allura.variable} ${satisfy.variable} ${caveat.variable} ${kalam.variable} ${permanentMarker.variable} antialiased h-full bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100`}>
+    <html lang="en" className="h-full" data-theme="cupcake">
+      <body className={`${inter.variable} ${dancingScript.variable} ${greatVibes.variable} ${allura.variable} ${satisfy.variable} ${caveat.variable} ${kalam.variable} ${permanentMarker.variable} antialiased h-full bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100`}>
         {children}
       </body>
     </html>

@@ -33,6 +33,7 @@ export default function PdfViewer() {
   const [lineWidth, setLineWidth] = useState<number>(2);
   const [textSize, setTextSize] = useState<number>(14);
   const [snap, setSnap] = useState<boolean>(false);
+  const pdfBytesRef = useRef<Uint8Array | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const printContainerRef = useRef<HTMLDivElement | null>(null);
@@ -181,6 +182,7 @@ export default function PdfViewer() {
     reader.onload = function () {
       const arrayBuffer = this.result as ArrayBuffer;
       const pdfData = new Uint8Array(arrayBuffer);
+      pdfBytesRef.current = pdfData;
       // compute file fingerprint
       crypto.subtle.digest("SHA-256", arrayBuffer).then((hashBuf) => {
         const hashArr = Array.from(new Uint8Array(hashBuf));
@@ -218,6 +220,15 @@ export default function PdfViewer() {
         });
     };
     reader.readAsArrayBuffer(file);
+  };
+
+  const onOpenNative = () => {
+    const bytes = pdfBytesRef.current;
+    if (!bytes) return;
+  const buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+  const blob = new Blob([buf as ArrayBuffer], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
   };
   // keyboard: delete / backspace to remove selected, copy/paste, z-order
   React.useEffect(() => {
@@ -338,6 +349,8 @@ export default function PdfViewer() {
               onPrev={onPrevPage}
               onNext={onNextPage}
               onPrint={onPrint}
+              onOpen={onOpenNative}
+              disableOpen={!pdfDoc}
             />
           </div>
           <div className="mt-3">

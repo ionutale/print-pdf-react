@@ -180,7 +180,7 @@ export default function PdfViewer() {
       <div className="w-full max-w-5xl screen">
         <div className="bg-white rounded-lg shadow-md p-4 mb-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <FilePicker onChange={onFile} />
+            <div className="text-sm text-gray-500">{pdfDoc ? (typeof pdfDoc.numPages === "number" ? `${pdfDoc.numPages} pages loaded` : "PDF loaded") : "No PDF loaded"}</div>
             <Controls
               visible={controlsVisible}
               pageLabel={pageLabel}
@@ -196,7 +196,7 @@ export default function PdfViewer() {
             <Toolbar tool={tool} setTool={setTool} onImagePick={addImageAnnotation} onClearPage={clearCurrentPageAnnotations} />
           </div>
         </div>
-        <div className="flex gap-4">
+          <div className="flex gap-4">
           <ThumbnailsSidebar
             pdfDoc={pdfDoc}
             currentPage={pageNum}
@@ -206,14 +206,36 @@ export default function PdfViewer() {
               queueRenderPage(n);
             }}
           />
-          <div id="pdf-viewer" className="relative bg-white p-4 rounded-lg shadow-md flex justify-center items-center h-[calc(100vh-150px)] grow">
-            {!pdfDoc && !isLoading && <Placeholder />}
-            <PdfCanvas ref={canvasRef} hidden={!pdfDoc || isLoading} />
-            <Loader hidden={!isLoading} />
-            {pdfDoc && !isLoading && (
-              <AnnotationOverlay tool={tool} page={pageNum} annotations={annotations} setAnnotations={setAnnotations} canvasRef={canvasRef} />
-            )}
-          </div>
+            <div
+              id="pdf-viewer"
+              className="relative bg-white p-4 rounded-lg shadow-md flex justify-center items-center h-[calc(100vh-150px)] grow"
+              onDragOver={(e) => {
+                if (pdfDoc) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "copy";
+              }}
+              onDrop={(e) => {
+                if (pdfDoc) return;
+                e.preventDefault();
+                const file = e.dataTransfer.files?.[0];
+                if (file && file.type === "application/pdf") onFile(file);
+              }}
+            >
+              {!pdfDoc && !isLoading && (
+                <div className="text-center text-gray-500">
+                  <Placeholder />
+                  <div className="mt-4 flex flex-col sm:flex-row items-center gap-3 justify-center">
+                    <FilePicker onChange={onFile} />
+                    <div className="text-xs text-gray-400">or drag & drop a PDF here</div>
+                  </div>
+                </div>
+              )}
+              <PdfCanvas ref={canvasRef} hidden={!pdfDoc || isLoading} />
+              <Loader hidden={!isLoading} />
+              {pdfDoc && !isLoading && (
+                <AnnotationOverlay tool={tool} page={pageNum} annotations={annotations} setAnnotations={setAnnotations} canvasRef={canvasRef} />
+              )}
+            </div>
         </div>
       </div>
       <PrintContainer ref={printContainerRef} />

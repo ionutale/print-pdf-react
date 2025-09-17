@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Print PDF React — Next.js App
 
-## Getting Started
+An interactive PDF viewer with print support, built with Next.js App Router, Tailwind CSS v4, and pdf.js (via CDN). You can select a local PDF, navigate pages, and print full-size pages with proper page breaks.
 
-First, run the development server:
+## Quick Start
+
+Using pnpm on macOS (zsh):
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+cd web-app
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 and select a PDF file.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Upload local PDFs securely (processed in-browser)
+- Page navigation with Prev/Next controls and page indicator
+- Print all pages with per-page canvas rendering for crisp output
+- Tailwind CSS styling; Inter font via next/font
 
-## Learn More
+## Architecture
 
-To learn more about Next.js, take a look at the following resources:
+- `src/app/page.tsx`: Minimal client page hosting the viewer container
+- `src/components/pdf/PdfViewer.tsx`: Orchestrates pdf.js loading, file handling, rendering, printing
+- `src/components/pdf/FilePicker.tsx`: Local file selector + filename display
+- `src/components/pdf/Controls.tsx`: Navigation (Prev/Next), page label, and Print
+- `src/components/pdf/PdfCanvas.tsx`: Canvas that renders the current page
+- `src/components/pdf/Placeholder.tsx`: Empty state before PDF loads
+- `src/components/pdf/Loader.tsx`: Spinner shown while loading/rendering
+- `src/components/pdf/PrintContainer.tsx`: Hidden container for print-only canvases
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Global styles (`src/app/globals.css`) include print rules to ensure each page prints on its own sheet and colors are preserved.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Implementation Notes
 
-## Deploy on Vercel
+- pdf.js is loaded via CDN using `next/script`. The worker is also pointed to the CDN version for Web Worker execution.
+- For print, each page is rendered to its own canvas at a higher scale and placed in a hidden print container. CSS `@media print` ensures page breaks and zero margins.
+- The viewer uses React state to manage visibility: placeholder vs. loader vs. canvas & controls.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Alternatives
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Install pdf.js locally: add `pdfjs-dist` and import from node_modules for offline operation.
+- Use dynamic import and cache PDFs for repeated viewing.
+
+## Scripts
+
+```bash
+pnpm dev    # start dev server (Turbopack)
+pnpm build  # production build
+pnpm start  # start production server
+```
+
+## License
+
+This project integrates pdf.js via CDN; refer to Mozilla pdf.js licensing for details. Your application code remains under your repository’s chosen license.

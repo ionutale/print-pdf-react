@@ -143,7 +143,7 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path d="M10.75 3.5a.75.75 0 0 0-1.5 0v3.69l-1.47-1.47a.75.75 0 0 0-1.06 1.06l3 3a.75.75 0 0 0 1.06 0l3-3a.75.75 0 1 0-1.06-1.06l-1.47 1.47V3.5Z" /><path d="M4.5 12.5A2 2 0 0 1 6.5 10h7a2 2 0 0 1 2 2.5l-.5 2a2 2 0 0 1-1.94 1.5H6.94A2 2 0 0 1 5 14.5l-.5-2Z" /></svg>
           <span>Color</span>
         </label>
-        <input type="color" value={color} onChange={(e) => setColor?.(e.target.value)} />
+        <input type="color" value={color} onChange={(e) => setColor?.(e.target.value)} className="w-8 h-6 p-0 rounded-md border input input-sm input-bordered" />
   <label className="text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-1" title="Stroke Width">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path d="M3.5 10a.75.75 0 0 1 .75-.75h11.5a.75.75 0 0 1 0 1.5H4.25A.75.75 0 0 1 3.5 10Z" /></svg>
           <span>Stroke</span>
@@ -175,24 +175,16 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
   <label className="text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-1" title="Snap to Grid">
           <Icon name="grid" /> <span>Snap</span>
         </label>
-        <input type="checkbox" checked={!!snap} onChange={(e) => setSnap?.(e.target.checked)} />
+        <input type="checkbox" className="toggle toggle-sm" checked={!!snap} onChange={(e) => setSnap?.(e.target.checked)} />
       </div>
       <div className="ml-4 flex items-center gap-2">
-        <div className="ml-0 text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-1">
+        <div className="ml-0 text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-2">
           <span>Theme</span>
-          <select
-            value={theme}
-            onChange={(e) => {
-              const val = e.target.value as 'system' | 'light' | 'dark';
-              setTheme(val);
-              if (typeof window !== 'undefined') localStorage.setItem('theme', val);
-            }}
-            className="text-xs border rounded px-2 py-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100"
-          >
-            <option value="system">System</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
+          <div className="btn-group">
+            <button type="button" className={`btn btn-xs ${theme === 'system' ? 'btn-active' : 'btn-ghost'}`} onClick={() => { setTheme('system'); if (typeof window !== 'undefined') localStorage.setItem('theme','system'); }}>System</button>
+            <button type="button" className={`btn btn-xs ${theme === 'light' ? 'btn-active' : 'btn-ghost'}`} onClick={() => { setTheme('light'); if (typeof window !== 'undefined') localStorage.setItem('theme','light'); }}>Light</button>
+            <button type="button" className={`btn btn-xs ${theme === 'dark' ? 'btn-active' : 'btn-ghost'}`} onClick={() => { setTheme('dark'); if (typeof window !== 'undefined') localStorage.setItem('theme','dark'); }}>Dark</button>
+          </div>
         </div>
       </div>
     </div>

@@ -65,6 +65,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.variable} ${dancingScript.variable} ${greatVibes.variable} ${allura.variable} ${satisfy.variable} ${caveat.variable} ${kalam.variable} ${permanentMarker.variable} antialiased h-full bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100`}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => { try { const theme = localStorage.getItem('theme') || 'system'; const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; const isDark = theme === 'dark' || (theme === 'system' && prefersDark); const root = document.documentElement; root.classList.toggle('dark', isDark); root.setAttribute('data-theme', isDark ? 'dim' : 'cupcake'); } catch {} })();`,
+          }}
+        />
         {children}
       </body>
     </html>

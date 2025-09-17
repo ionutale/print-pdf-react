@@ -692,7 +692,7 @@ export default function PdfViewer() {
         }}
       />
       <div className="w-full h-full flex flex-col">
-        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 mb-3 shrink-0">
+  <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-3 sm:p-4 mb-3 shrink-0">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm text-gray-500">{pdfDoc ? (typeof pdfDoc.numPages === "number" ? `${pdfDoc.numPages} pages loaded` : "PDF loaded") : "No PDF loaded"}</div>
           </div>
@@ -719,7 +719,7 @@ export default function PdfViewer() {
         </div>
           <div className="flex gap-4 flex-1 min-h-0">
           <div className="flex flex-col gap-2 w-[180px] min-w-[180px] shrink-0 overflow-hidden">
-            <div className="bg-white rounded-lg shadow p-2 text-xs text-gray-600 shrink-0">
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-2 text-xs text-gray-600 dark:text-gray-300 shrink-0">
               Thumb scale
               <input
                 type="range"
@@ -730,7 +730,7 @@ export default function PdfViewer() {
                 className="w-36 ml-2 align-middle"
               />
             </div>
-            <div className="bg-white rounded-lg shadow p-2 overflow-auto flex-1 min-h-0">
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-2 overflow-auto flex-1 min-h-0">
               <ThumbnailsSidebar
                 pdfDoc={pdfDoc}
                 currentPage={pageNum}
@@ -752,7 +752,7 @@ export default function PdfViewer() {
             <div
               id="pdf-viewer"
               ref={viewerRef}
-              className="relative bg-white p-4 rounded-lg shadow-md flex justify-center items-center grow min-h-0 h-full overflow-hidden"
+              className="relative bg-white dark:bg-gray-950 p-4 rounded-lg shadow-md flex justify-center items-center grow min-h-0 h-full overflow-hidden"
               onDragOver={(e) => {
                 if (pdfDoc) return;
                 e.preventDefault();
@@ -794,11 +794,11 @@ export default function PdfViewer() {
                 />
               )}
             </div>
-            <div className="w-[220px] min-w-[220px] shrink-0 bg-white rounded-lg shadow p-2 overflow-auto">
+            <div className="w-[220px] min-w-[220px] shrink-0 bg-white dark:bg-gray-900 rounded-lg shadow p-2 overflow-auto">
               <HistorySidebar history={history} historyIndex={historyIndex} />
             </div>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-3 shrink-0">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-3 sm:p-4 mt-3 shrink-0">
           <Controls
             visible={controlsVisible}
             pageLabel={pageLabel}

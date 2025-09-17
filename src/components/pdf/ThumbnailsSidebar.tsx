@@ -182,25 +182,25 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
   }, [currentPage]);
 
   return (
-    <aside className="w-48 shrink-0 h-[calc(100%-200px)] overflow-auto bg-white rounded-lg shadow-md p-2">
-      <div className="text-xs text-gray-500 px-1 pb-1">Pages</div>
+    <aside className="w-48 shrink-0 h-[calc(100%-200px)] overflow-auto bg-white dark:bg-gray-900 rounded-lg shadow-md p-2">
+      <div className="text-xs text-gray-500 dark:text-gray-300 px-1 pb-1">Pages</div>
       <div ref={containerRef} className="grid gap-2">
         {/* thumbnails injected here */}
       </div>
       {hiddenPages.length > 0 && (
-        <div className="mt-3 border-t pt-2">
-          <div className="text-xs text-gray-500 px-1 pb-1">Trash</div>
+        <div className="mt-3 border-t border-gray-200 dark:border-gray-700 pt-2">
+          <div className="text-xs text-gray-500 dark:text-gray-300 px-1 pb-1">Trash</div>
           <div className="flex gap-1 mb-1">
             <button
               type="button"
-              className="text-xs bg-gray-200 px-2 py-1 rounded"
+              className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-2 py-1 rounded"
               onClick={() => setSelectedHidden(new Set(hiddenPages))}
             >
               Select All
             </button>
             <button
               type="button"
-              className="text-xs bg-gray-200 px-2 py-1 rounded"
+              className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-2 py-1 rounded"
               onClick={() => setSelectedHidden(new Set())}
             >
               Clear
@@ -208,7 +208,7 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
           </div>
           <div className="flex flex-col gap-1 max-h-40 overflow-auto pr-1">
             {hiddenPages.map((p) => (
-              <label key={p} className="flex items-center gap-2 text-xs text-gray-600">
+              <label key={p} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
                 <input
                   type="checkbox"
                   checked={selectedHidden.has(p)}
@@ -227,7 +227,7 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
           </div>
           <div className="mt-2 flex gap-1">
             <select
-              className="text-xs border rounded px-1 py-1 flex-1"
+              className="text-xs border rounded px-1 py-1 flex-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100"
               value={restorePosition}
               onChange={(e) => setRestorePosition(Number(e.target.value))}
             >

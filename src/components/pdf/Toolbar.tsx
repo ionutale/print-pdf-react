@@ -23,6 +23,22 @@ type Props = {
 };
 
 export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color, setColor, lineWidth, setLineWidth, textSize, setTextSize, fontFamily, setFontFamily, snap, setSnap, onExport, onImport }: Props) {
+  const [theme, setTheme] = React.useState<'system' | 'light' | 'dark'>(() => (typeof window !== 'undefined' ? (localStorage.getItem('theme') as any) || 'system' : 'system'));
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const root = document.documentElement;
+    const apply = (mode: 'system' | 'light' | 'dark') => {
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDark = mode === 'dark' || (mode === 'system' && prefersDark);
+      root.classList.toggle('dark', isDark);
+    };
+    apply(theme);
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => theme === 'system' && apply('system');
+    mq.addEventListener?.('change', onChange);
+    return () => mq.removeEventListener?.('change', onChange);
+  }, [theme]);
   const Icon = ({ name }: { name: string }) => {
     switch (name) {
       case "select":
@@ -93,7 +109,9 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
       onClick={() => setTool(t)}
       className={
         "px-3 py-1 rounded-md border " +
-        (tool === t ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-800 border-gray-300 hover:bg-gray-50")
+        (tool === t
+          ? "bg-indigo-600 text-white border-indigo-600"
+          : "bg-white text-gray-800 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700")
       }
       aria-pressed={tool === t}
     >
@@ -107,7 +125,7 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
       {btn("text", "Text")}
       {btn("rect", "Rectangle")}
       {btn("ellipse", "Ellipse")}
-      <label className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50 cursor-pointer inline-flex items-center gap-1">
+      <label className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700 cursor-pointer inline-flex items-center gap-1">
         <Icon name="image" /> <span>Image</span>
         <input
           type="file"
@@ -119,31 +137,31 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
       <button
         type="button"
         onClick={onClearPage}
-        className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50 inline-flex items-center gap-1"
+        className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700 inline-flex items-center gap-1"
       >
         <Icon name="trash" /> <span>Clear Page</span>
       </button>
       <div className="ml-4 flex items-center gap-2">
-        <label className="text-xs text-gray-600 inline-flex items-center gap-1" title="Stroke/Text Color">
+        <label className="text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-1" title="Stroke/Text Color">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path d="M10.75 3.5a.75.75 0 0 0-1.5 0v3.69l-1.47-1.47a.75.75 0 0 0-1.06 1.06l3 3a.75.75 0 0 0 1.06 0l3-3a.75.75 0 1 0-1.06-1.06l-1.47 1.47V3.5Z" /><path d="M4.5 12.5A2 2 0 0 1 6.5 10h7a2 2 0 0 1 2 2.5l-.5 2a2 2 0 0 1-1.94 1.5H6.94A2 2 0 0 1 5 14.5l-.5-2Z" /></svg>
           <span>Color</span>
         </label>
         <input type="color" value={color} onChange={(e) => setColor?.(e.target.value)} />
-        <label className="text-xs text-gray-600 inline-flex items-center gap-1" title="Stroke Width">
+  <label className="text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-1" title="Stroke Width">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path d="M3.5 10a.75.75 0 0 1 .75-.75h11.5a.75.75 0 0 1 0 1.5H4.25A.75.75 0 0 1 3.5 10Z" /></svg>
           <span>Stroke</span>
         </label>
-        <input type="number" min={1} max={12} value={lineWidth} onChange={(e) => setLineWidth?.(parseInt(e.target.value))} className="w-16" />
-        <label className="text-xs text-gray-600 inline-flex items-center gap-1" title="Text Size">
+  <input type="number" min={1} max={12} value={lineWidth} onChange={(e) => setLineWidth?.(parseInt(e.target.value))} className="w-16 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded px-1" />
+  <label className="text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-1" title="Text Size">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path d="M3.5 5.25A.75.75 0 0 1 4.25 4.5h11.5a.75.75 0 0 1 0 1.5h-5v9.25a.75.75 0 0 1-1.5 0V6h-5.5a.75.75 0 0 1-.75-.75Z" /></svg>
           <span>Text</span>
         </label>
-        <input type="number" min={10} max={48} value={textSize} onChange={(e) => setTextSize?.(parseInt(e.target.value))} className="w-16" />
-        <label className="text-xs text-gray-600 inline-flex items-center gap-1" title="Font Family">
+  <input type="number" min={10} max={48} value={textSize} onChange={(e) => setTextSize?.(parseInt(e.target.value))} className="w-16 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded px-1" />
+  <label className="text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-1" title="Font Family">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path d="M3.5 4.75A.75.75 0 0 1 4.25 4h11.5a.75.75 0 0 1 0 1.5h-4.5v10a.75.75 0 0 1-1.5 0v-10h-5.5A.75.75 0 0 1 3.5 4.75Z" /></svg>
           <span>Font</span>
         </label>
-        <select value={fontFamily} onChange={(e) => setFontFamily?.(e.target.value)} className="text-xs border rounded px-2 py-1">
+  <select value={fontFamily} onChange={(e) => setFontFamily?.(e.target.value)} className="text-xs border rounded px-2 py-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100">
           <option value="Inter">Inter (Default)</option>
           <option value="Arial">Arial</option>
           <option value="Times New Roman">Times New Roman</option>
@@ -157,16 +175,16 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
           <option value="Kalam">Kalam (Handwriting)</option>
           <option value="Permanent Marker">Permanent Marker (Marker)</option>
         </select>
-        <label className="text-xs text-gray-600 inline-flex items-center gap-1" title="Snap to Grid">
+  <label className="text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-1" title="Snap to Grid">
           <Icon name="grid" /> <span>Snap</span>
         </label>
         <input type="checkbox" checked={!!snap} onChange={(e) => setSnap?.(e.target.checked)} />
       </div>
       <div className="ml-4 flex items-center gap-2">
-        <button type="button" className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50 inline-flex items-center gap-1" onClick={onExport}>
+        <button type="button" className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700 inline-flex items-center gap-1" onClick={onExport}>
           <Icon name="export" /> <span>Export</span>
         </button>
-        <label className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50 cursor-pointer inline-flex items-center gap-1">
+        <label className="px-3 py-1 rounded-md border bg-white text-gray-800 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700 cursor-pointer inline-flex items-center gap-1">
           <Icon name="import" /> <span>Import</span>
           <input type="file" accept="application/json" className="hidden" onChange={async (e) => {
             const f = e.target.files?.[0];
@@ -175,6 +193,22 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
             onImport?.(text);
           }} />
         </label>
+        <div className="ml-2 text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-1">
+          <span>Theme</span>
+          <select
+            value={theme}
+            onChange={(e) => {
+              const val = e.target.value as 'system' | 'light' | 'dark';
+              setTheme(val);
+              if (typeof window !== 'undefined') localStorage.setItem('theme', val);
+            }}
+            className="text-xs border rounded px-2 py-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100"
+          >
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
       </div>
     </div>
   );

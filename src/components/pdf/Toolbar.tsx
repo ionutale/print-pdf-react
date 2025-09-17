@@ -23,10 +23,14 @@ type Props = {
 };
 
 export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color, setColor, lineWidth, setLineWidth, textSize, setTextSize, fontFamily, setFontFamily, snap, setSnap, onExport, onImport }: Props) {
-  const [theme, setTheme] = React.useState<'system' | 'light' | 'dark'>(() => (typeof window !== 'undefined' ? (localStorage.getItem('theme') as any) || 'system' : 'system'));
+  const [theme, setTheme] = React.useState<'system' | 'light' | 'dark'>('system');
+  const [hydrated, setHydrated] = React.useState(false);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
+    const saved = (localStorage.getItem('theme') as 'system' | 'light' | 'dark' | null) || 'system';
+    setTheme(saved);
+    setHydrated(true);
     const root = document.documentElement;
     const apply = (mode: 'system' | 'light' | 'dark') => {
       const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -181,9 +185,9 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
         <div className="ml-0 text-xs text-gray-600 dark:text-gray-300 inline-flex items-center gap-2">
           <span>Theme</span>
           <div className="btn-group">
-            <button type="button" className={`btn btn-xs ${theme === 'system' ? 'btn-active' : 'btn-ghost'}`} onClick={() => { setTheme('system'); if (typeof window !== 'undefined') localStorage.setItem('theme','system'); }}>System</button>
-            <button type="button" className={`btn btn-xs ${theme === 'light' ? 'btn-active' : 'btn-ghost'}`} onClick={() => { setTheme('light'); if (typeof window !== 'undefined') localStorage.setItem('theme','light'); }}>Light</button>
-            <button type="button" className={`btn btn-xs ${theme === 'dark' ? 'btn-active' : 'btn-ghost'}`} onClick={() => { setTheme('dark'); if (typeof window !== 'undefined') localStorage.setItem('theme','dark'); }}>Dark</button>
+            <button type="button" className={`btn btn-xs ${hydrated && theme === 'system' ? 'btn-active' : 'btn-ghost'}`} onClick={() => { setTheme('system'); if (typeof window !== 'undefined') { localStorage.setItem('theme','system'); document.cookie = 'theme=system; path=/; max-age=31536000'; } }}>System</button>
+            <button type="button" className={`btn btn-xs ${hydrated && theme === 'light' ? 'btn-active' : 'btn-ghost'}`} onClick={() => { setTheme('light'); if (typeof window !== 'undefined') { localStorage.setItem('theme','light'); document.cookie = 'theme=light; path=/; max-age=31536000'; } }}>Light</button>
+            <button type="button" className={`btn btn-xs ${hydrated && theme === 'dark' ? 'btn-active' : 'btn-ghost'}`} onClick={() => { setTheme('dark'); if (typeof window !== 'undefined') { localStorage.setItem('theme','dark'); document.cookie = 'theme=dark; path=/; max-age=31536000'; } }}>Dark</button>
           </div>
         </div>
       </div>

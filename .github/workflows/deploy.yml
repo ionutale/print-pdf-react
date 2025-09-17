@@ -41,9 +41,7 @@ jobs:
           GITHUB_PAGES: 'true'
           # Set this to "/<repo-name>" for user/org pages or project pages
           NEXT_PUBLIC_BASE_PATH: '/${{ github.event.repository.name }}'
-        run: |
-          pnpm build
-          pnpm export
+        run: pnpm build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

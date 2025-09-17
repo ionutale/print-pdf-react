@@ -87,7 +87,6 @@ Local preview of the static build:
 
 ```bash
 pnpm build
-pnpm export
 npx serve out  # or any static server
 ```
 

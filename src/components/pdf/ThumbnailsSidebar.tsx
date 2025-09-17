@@ -10,12 +10,14 @@ type Props = {
   onDeletePage?: (pageNum: number) => void;
   hiddenPages?: number[];
   onRestorePagesAtEnd?: (pages: number[]) => void;
+  onRestorePagesAtPosition?: (pages: number[], position: number) => void;
   onReorderPages?: (nextOrder: number[]) => void;
 };
 
-export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, thumbScale = 20, pages: overridePages, onDeletePage, hiddenPages = [], onRestorePagesAtEnd, onReorderPages }: Props) {
+export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, thumbScale = 20, pages: overridePages, onDeletePage, hiddenPages = [], onRestorePagesAtEnd, onRestorePagesAtPosition, onReorderPages }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [selectedHidden, setSelectedHidden] = useState<Set<number>>(new Set());
+  const [restorePosition, setRestorePosition] = useState<number>(0);
 
   const pages = useMemo(() => {
     if (overridePages) return overridePages;
@@ -180,6 +182,22 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
       {hiddenPages.length > 0 && (
         <div className="mt-3 border-t pt-2">
           <div className="text-xs text-gray-500 px-1 pb-1">Trash</div>
+          <div className="flex gap-1 mb-1">
+            <button
+              type="button"
+              className="text-xs bg-gray-200 px-2 py-1 rounded"
+              onClick={() => setSelectedHidden(new Set(hiddenPages))}
+            >
+              Select All
+            </button>
+            <button
+              type="button"
+              className="text-xs bg-gray-200 px-2 py-1 rounded"
+              onClick={() => setSelectedHidden(new Set())}
+            >
+              Clear
+            </button>
+          </div>
           <div className="flex flex-col gap-1 max-h-40 overflow-auto pr-1">
             {hiddenPages.map((p) => (
               <label key={p} className="flex items-center gap-2 text-xs text-gray-600">
@@ -199,19 +217,33 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
               </label>
             ))}
           </div>
-          <button
-            type="button"
-            className="mt-2 w-full rounded bg-indigo-600 text-white text-xs py-1 disabled:opacity-50"
-            disabled={!onRestorePagesAtEnd || selectedHidden.size === 0}
-            onClick={() => {
-              if (!onRestorePagesAtEnd) return;
-              const pages = Array.from(selectedHidden.values()).sort((a, b) => a - b);
-              onRestorePagesAtEnd(pages);
-              setSelectedHidden(new Set());
-            }}
-          >
-            Restore Selected to End
-          </button>
+          <div className="mt-2 flex gap-1">
+            <select
+              className="text-xs border rounded px-1 py-1 flex-1"
+              value={restorePosition}
+              onChange={(e) => setRestorePosition(Number(e.target.value))}
+            >
+              {pages.map((_, idx) => (
+                <option key={idx} value={idx}>
+                  Position {idx + 1}
+                </option>
+              ))}
+              <option value={pages.length}>End</option>
+            </select>
+            <button
+              type="button"
+              className="rounded bg-indigo-600 text-white text-xs py-1 px-2 disabled:opacity-50"
+              disabled={!onRestorePagesAtPosition || selectedHidden.size === 0}
+              onClick={() => {
+                if (!onRestorePagesAtPosition) return;
+                const pages = Array.from(selectedHidden.values()).sort((a, b) => a - b);
+                onRestorePagesAtPosition(pages, restorePosition);
+                setSelectedHidden(new Set());
+              }}
+            >
+              Restore Here
+            </button>
+          </div>
         </div>
       )}
     </aside>

@@ -12,6 +12,10 @@ type Props = {
   onNext: () => void;
   onPrint: () => void;
   onOpen?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  disableUndo?: boolean;
+  disableRedo?: boolean;
 };
 
 export default function Controls({
@@ -25,9 +29,31 @@ export default function Controls({
   onNext,
   onPrint,
   onOpen,
+  onUndo,
+  onRedo,
+  disableUndo,
+  disableRedo,
 }: Props) {
   return (
     <div id="pdf-controls" className={(visible ? "flex" : "hidden") + " items-center gap-4"}>
+      {onUndo && (
+        <button
+          className="px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={onUndo}
+          disabled={!!disableUndo}
+        >
+          Undo
+        </button>
+      )}
+      {onRedo && (
+        <button
+          className="px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={onRedo}
+          disabled={!!disableRedo}
+        >
+          Redo
+        </button>
+      )}
       <button
         id="prev-page"
         className="px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"

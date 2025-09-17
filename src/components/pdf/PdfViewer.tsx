@@ -9,6 +9,7 @@ import PdfCanvas from "./PdfCanvas";
 import PrintContainer from "./PrintContainer";
 import ThumbnailsSidebar from "./ThumbnailsSidebar";
 import Toolbar, { type Tool } from "./Toolbar";
+import HistorySidebar from "./HistorySidebar";
 import AnnotationOverlay, { type Annotation } from "./AnnotationOverlay";
 
 declare global {
@@ -30,6 +31,8 @@ export default function PdfViewer() {
   const [thumbScale, setThumbScale] = useState<number>(20);
   const [visiblePages, setVisiblePages] = useState<number[] | null>(null);
   const [hiddenPages, setHiddenPages] = useState<number[]>([]);
+  const [history, setHistory] = useState<{ action: string; data: any }[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [strokeColor, setStrokeColor] = useState<string>("#ef4444");
   const [lineWidth, setLineWidth] = useState<number>(2);
@@ -362,6 +365,7 @@ export default function PdfViewer() {
     setVisiblePages(nextPages);
     setHiddenPages((prev) => Array.from(new Set([...prev, n])).sort((a, b) => a - b));
     setAnnotations((prev) => prev.filter((a) => a.page !== n));
+    pushHistory('delete', { page: n, annotations: annotations.filter(a => a.page === n) });
     // adjust current page only if we removed the current one
     if (pageNum === n) {
       const candidate = nextPages[Math.max(0, idx - 1)] ?? nextPages[0];
@@ -377,6 +381,62 @@ export default function PdfViewer() {
     if (toRestore.length === 0) return;
     setVisiblePages([...visiblePages, ...toRestore]);
     setHiddenPages((prev) => prev.filter((p) => !toRestore.includes(p)));
+    pushHistory('restore', { pages: toRestore });
+  };
+
+  const pushHistory = (action: string, data: any) => {
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push({ action, data });
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
+  const undo = () => {
+    if (historyIndex < 0) return;
+    const entry = history[historyIndex];
+    if (entry.action === 'delete') {
+      const { page, annotations } = entry.data;
+      setVisiblePages(prev => prev ? [...prev, page] : [page]);
+      setHiddenPages(prev => prev.filter(p => p !== page));
+      setAnnotations(prev => [...prev, ...annotations]);
+    } else if (entry.action === 'reorder') {
+      setVisiblePages(entry.data.prevVisible);
+    } else if (entry.action === 'restore') {
+      const { pages } = entry.data;
+      setVisiblePages(prev => prev ? prev.filter(p => !pages.includes(p)) : []);
+      setHiddenPages(prev => [...prev, ...pages]);
+    }
+    setHistoryIndex(historyIndex - 1);
+  };
+
+  const redo = () => {
+    if (historyIndex >= history.length - 1) return;
+    const entry = history[historyIndex + 1];
+    if (entry.action === 'delete') {
+      const { page } = entry.data;
+      setVisiblePages(prev => prev ? prev.filter(p => p !== page) : []);
+      setHiddenPages(prev => [...prev, page]);
+      setAnnotations(prev => prev.filter(a => a.page !== page));
+    } else if (entry.action === 'reorder') {
+      setVisiblePages(entry.data.newVisible);
+    } else if (entry.action === 'restore') {
+      const { pages } = entry.data;
+      setVisiblePages(prev => prev ? [...prev, ...pages] : pages);
+      setHiddenPages(prev => prev.filter(p => !pages.includes(p)));
+    }
+    setHistoryIndex(historyIndex + 1);
+  };
+
+  const restorePagesAtPosition = (pages: number[], position: number) => {
+    if (!pdfDoc) return;
+    if (!visiblePages) return;
+    const toRestore = pages.filter((p) => !visiblePages.includes(p));
+    if (toRestore.length === 0) return;
+    const nextVisible = [...visiblePages];
+    nextVisible.splice(position, 0, ...toRestore);
+    setVisiblePages(nextVisible);
+    setHiddenPages((prev) => prev.filter((p) => !toRestore.includes(p)));
+    pushHistory('restore', { pages: toRestore });
   };
 
   const reorderPages = (nextOrder: number[]) => {
@@ -386,6 +446,7 @@ export default function PdfViewer() {
     const setB = new Set(nextOrder);
     if (setA.size !== setB.size) return;
     for (const v of setA) if (!setB.has(v)) return;
+    pushHistory('reorder', { prevVisible: visiblePages.slice(), newVisible: nextOrder.slice() });
     setVisiblePages(nextOrder.slice());
   };
 
@@ -420,6 +481,10 @@ export default function PdfViewer() {
               onPrint={onPrint}
               onOpen={onOpenNative}
               disableOpen={!pdfDoc}
+              onUndo={undo}
+              onRedo={redo}
+              disableUndo={historyIndex < 0}
+              disableRedo={historyIndex >= history.length - 1}
             />
           </div>
           <div className="mt-3">
@@ -467,6 +532,7 @@ export default function PdfViewer() {
               onDeletePage={deletePage}
               hiddenPages={hiddenPages}
               onRestorePagesAtEnd={restorePagesAtEnd}
+              onRestorePagesAtPosition={restorePagesAtPosition}
               onReorderPages={reorderPages}
             />
           </div>
@@ -513,6 +579,7 @@ export default function PdfViewer() {
                 />
               )}
             </div>
+            <HistorySidebar history={history} historyIndex={historyIndex} />
         </div>
       </div>
       <PrintContainer ref={printContainerRef} />

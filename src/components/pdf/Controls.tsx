@@ -9,6 +9,8 @@ type Props = {
   disablePrint: boolean;
   disableOpen?: boolean;
   disableSave?: boolean;
+  fitMode?: 'page' | 'width' | '100%';
+  onChangeFitMode?: (m: 'page' | 'width' | '100%') => void;
   onPrev: () => void;
   onNext: () => void;
   onPrint: () => void;
@@ -28,6 +30,8 @@ export default function Controls({
   disablePrint,
   disableOpen,
   disableSave,
+  fitMode,
+  onChangeFitMode,
   onPrev,
   onNext,
   onPrint,
@@ -69,6 +73,20 @@ export default function Controls({
       <span id="page-indicator" className="text-sm font-medium text-gray-700">
         {pageLabel}
       </span>
+      {onChangeFitMode && (
+        <div className="inline-flex items-center gap-2 text-xs text-gray-600">
+          <span>Fit</span>
+          <select
+            value={fitMode}
+            onChange={(e) => onChangeFitMode?.(e.target.value as any)}
+            className="text-xs border rounded px-2 py-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100"
+          >
+            <option value="page">Page</option>
+            <option value="width">Width</option>
+            <option value="100%">100%</option>
+          </select>
+        </div>
+      )}
       <button
         id="next-page"
         className="px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"

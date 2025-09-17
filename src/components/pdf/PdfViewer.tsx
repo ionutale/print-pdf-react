@@ -45,6 +45,10 @@ export default function PdfViewer() {
   const printContainerRef = useRef<HTMLDivElement | null>(null);
   const viewerRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1.5);
+  const [fitMode, setFitMode] = useState<'page' | 'width' | '100%'>(() => {
+    if (typeof window === 'undefined') return 'page';
+    return (localStorage.getItem('fitMode') as any) || 'page';
+  });
 
   const updatePageLabel = () => {
     const total = visiblePages ? visiblePages.length : (pdfDoc?.numPages ?? 0);
@@ -119,7 +123,11 @@ export default function PdfViewer() {
         const padY = 16 * 2; // p-4 on container
         const availW = Math.max(0, el.clientWidth - padX);
         const availH = Math.max(0, el.clientHeight - padY);
-        const s = Math.max(0.25, Math.min(4, Math.min(availW / v1.width, availH / v1.height)));
+        let s = 1;
+        if (fitMode === 'page') s = Math.min(availW / v1.width, availH / v1.height);
+        else if (fitMode === 'width') s = availW / v1.width;
+        else if (fitMode === '100%') s = 1;
+        s = Math.max(0.25, Math.min(6, s));
         if (!destroyed) setScale((prev) => (Math.abs(prev - s) > 0.01 ? s : prev));
       } catch {
         // ignore
@@ -132,7 +140,7 @@ export default function PdfViewer() {
       destroyed = true;
       ro.disconnect();
     };
-  }, [pdfDoc, pageNum]);
+  }, [pdfDoc, pageNum, fitMode]);
 
   // Re-render current page when scale changes
   React.useEffect(() => {
@@ -140,6 +148,11 @@ export default function PdfViewer() {
     queueRenderPage(pageNum);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scale]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('fitMode', fitMode);
+  }, [fitMode]);
 
   const onPrint = async () => {
     if (!pdfDoc || !printContainerRef.current) return;
@@ -806,6 +819,8 @@ export default function PdfViewer() {
             disableNext={!pdfDoc || (() => { const pages = visiblePages ?? Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1); const idx = pages.indexOf(pageNum); return idx === -1 || idx >= pages.length - 1; })()}
             disablePrint={!pdfDoc}
             disableSave={!pdfDoc}
+            fitMode={fitMode}
+            onChangeFitMode={setFitMode}
             onPrev={onPrevPage}
             onNext={onNextPage}
             onPrint={onPrint}

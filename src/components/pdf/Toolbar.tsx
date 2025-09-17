@@ -120,7 +120,7 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 text-[13px] sm:text-sm">
       {btn("select", "Select")}
       {btn("text", "Text")}
       {btn("rect", "Rectangle")}

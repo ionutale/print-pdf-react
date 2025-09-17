@@ -7,7 +7,6 @@ An interactive PDF viewer and annotator with print support, built with Next.js A
 Using pnpm on macOS (zsh):
 
 ```bash
-cd web-app
 pnpm install
 pnpm dev
 ```
@@ -80,7 +79,7 @@ If you need a native-tab view of the loaded PDF (similar to using `window.open` 
 
 This app supports static export and deployment to GitHub Pages.
 
-- Static export: `pnpm build && pnpm export` generates `web-app/out/`.
+- Static export: `pnpm build && pnpm export` generates `out/`.
 - GitHub Actions: A workflow is provided at `.github/workflows/deploy.yml` that builds and publishes to Pages on pushes to `main`.
 - Base path: The workflow sets `NEXT_PUBLIC_BASE_PATH='/${repo-name}'` and `GITHUB_PAGES=true` so assets resolve correctly under project pages. If you use a custom Pages path, update that env.
 

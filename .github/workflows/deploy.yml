@@ -31,14 +31,12 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
-          cache-dependency-path: web-app/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        working-directory: web-app
         run: pnpm install --frozen-lockfile
 
       - name: Build Next.js
-        working-directory: web-app
         env:
           GITHUB_PAGES: 'true'
           # Set this to "/<repo-name>" for user/org pages or project pages
@@ -50,7 +48,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: web-app/out
+          path: out
 
   deploy:
     needs: build

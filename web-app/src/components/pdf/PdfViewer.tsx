@@ -7,6 +7,7 @@ import Placeholder from "./Placeholder";
 import Loader from "./Loader";
 import PdfCanvas from "./PdfCanvas";
 import PrintContainer from "./PrintContainer";
+import ThumbnailsSidebar from "./ThumbnailsSidebar";
 
 declare global {
   interface Window {
@@ -152,7 +153,7 @@ export default function PdfViewer() {
           }
         }}
       />
-      <div className="w-full max-w-4xl screen">
+      <div className="w-full max-w-5xl screen">
         <div className="bg-white rounded-lg shadow-md p-4 mb-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <FilePicker onChange={onFile} />
@@ -168,10 +169,21 @@ export default function PdfViewer() {
             />
           </div>
         </div>
-        <div id="pdf-viewer" className="bg-white p-4 rounded-lg shadow-md flex justify-center items-center h-[calc(100vh-150px)]">
-          {!pdfDoc && !isLoading && <Placeholder />}
-          <PdfCanvas ref={canvasRef} hidden={!pdfDoc || isLoading} />
-          <Loader hidden={!isLoading} />
+        <div className="flex gap-4">
+          <ThumbnailsSidebar
+            pdfDoc={pdfDoc}
+            currentPage={pageNum}
+            onSelectPage={(n) => {
+              if (!pdfDoc) return;
+              setPageNum(n);
+              queueRenderPage(n);
+            }}
+          />
+          <div id="pdf-viewer" className="bg-white p-4 rounded-lg shadow-md flex justify-center items-center h-[calc(100vh-150px)] grow">
+            {!pdfDoc && !isLoading && <Placeholder />}
+            <PdfCanvas ref={canvasRef} hidden={!pdfDoc || isLoading} />
+            <Loader hidden={!isLoading} />
+          </div>
         </div>
       </div>
       <PrintContainer ref={printContainerRef} />

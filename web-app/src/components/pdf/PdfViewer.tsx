@@ -8,6 +8,8 @@ import Loader from "./Loader";
 import PdfCanvas from "./PdfCanvas";
 import PrintContainer from "./PrintContainer";
 import ThumbnailsSidebar from "./ThumbnailsSidebar";
+import Toolbar, { type Tool } from "./Toolbar";
+import AnnotationOverlay, { type Annotation } from "./AnnotationOverlay";
 
 declare global {
   interface Window {
@@ -22,6 +24,8 @@ export default function PdfViewer() {
   const [pageRendering, setPageRendering] = useState(false);
   const [pageNumPending, setPageNumPending] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [tool, setTool] = useState<Tool>("select");
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const printContainerRef = useRef<HTMLDivElement | null>(null);
@@ -104,6 +108,26 @@ export default function PdfViewer() {
     window.addEventListener("afterprint", cleanup);
   };
 
+  const addImageAnnotation = (file: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const id = crypto.randomUUID();
+        setAnnotations((prev) =>
+          prev.concat({ id, type: "image", x: 20, y: 20, w: Math.min(200, img.width), h: Math.min(200, img.height), src: img.src as any, page: pageNum })
+        );
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearCurrentPageAnnotations = () => {
+    setAnnotations((prev) => prev.filter((a) => a.page !== pageNum));
+  };
+
   const onFile = (file: File | null) => {
     const fileNameSpan = document.getElementById("file-name");
     if (!file) {
@@ -168,6 +192,9 @@ export default function PdfViewer() {
               onPrint={onPrint}
             />
           </div>
+          <div className="mt-3">
+            <Toolbar tool={tool} setTool={setTool} onImagePick={addImageAnnotation} onClearPage={clearCurrentPageAnnotations} />
+          </div>
         </div>
         <div className="flex gap-4">
           <ThumbnailsSidebar
@@ -179,10 +206,13 @@ export default function PdfViewer() {
               queueRenderPage(n);
             }}
           />
-          <div id="pdf-viewer" className="bg-white p-4 rounded-lg shadow-md flex justify-center items-center h-[calc(100vh-150px)] grow">
+          <div id="pdf-viewer" className="relative bg-white p-4 rounded-lg shadow-md flex justify-center items-center h-[calc(100vh-150px)] grow">
             {!pdfDoc && !isLoading && <Placeholder />}
             <PdfCanvas ref={canvasRef} hidden={!pdfDoc || isLoading} />
             <Loader hidden={!isLoading} />
+            {pdfDoc && !isLoading && (
+              <AnnotationOverlay tool={tool} page={pageNum} annotations={annotations} setAnnotations={setAnnotations} canvasRef={canvasRef} />
+            )}
           </div>
         </div>
       </div>

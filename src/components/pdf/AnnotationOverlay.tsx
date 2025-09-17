@@ -4,7 +4,7 @@ import type { Tool } from "./Toolbar";
 
 export type Annotation =
   | { id: string; type: "rect" | "ellipse"; x: number; y: number; w: number; h: number; color: string; stroke?: number; page: number }
-  | { id: string; type: "text"; x: number; y: number; text: string; color: string; size?: number; fontFamily?: string; page: number }
+  | { id: string; type: "text"; x: number; y: number; text: string; color: string; size?: number; fontFamily?: string; w?: number; h?: number; page: number }
   | { id: string; type: "image"; x: number; y: number; w: number; h: number; src: string; page: number };
 
 type Props = {
@@ -23,7 +23,7 @@ type Props = {
   defaultFontFamily?: string;
 };
 
-export default function AnnotationOverlay({ tool, page, annotations, setAnnotations, canvasRef, selectedId, setSelectedId, snapEnabled = false, snapSize = 8, defaultColor = "#ef4444", defaultStroke = 2, defaultTextSize = 14, defaultFontFamily = "Inter" }: Props) {
+export default function AnnotationOverlay({ tool, page, annotations, setAnnotations, canvasRef, selectedId, setSelectedId, snapEnabled = false, snapSize = 8, defaultColor = "#000000", defaultStroke = 2, defaultTextSize = 14, defaultFontFamily = "Inter" }: Props) {
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const [drag, setDrag] = useState<{ x: number; y: number } | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -58,7 +58,25 @@ export default function AnnotationOverlay({ tool, page, annotations, setAnnotati
       if (annId && !handle) {
         setSelectedId(annId);
         const a = annotations.find((x) => x.id === annId);
-        if (a && (a as any).w !== undefined) setMoving({ id: a.id, offsetX: toLocal(e).x - a.x, offsetY: toLocal(e).y - a.y });
+        if (a) {
+          // Start moving the annotation
+          if ("w" in a) {
+            setMoving({ id: a.id, offsetX: toLocal(e).x - a.x, offsetY: toLocal(e).y - a.y });
+          } else if (a.type === "text") {
+            setMoving({ id: a.id, offsetX: toLocal(e).x - a.x, offsetY: toLocal(e).y - a.y });
+          }
+        }
+      } else if (annId && handle === "move") {
+        // Handle moving via gizmo background for all annotation types
+        setSelectedId(annId);
+        const a = annotations.find((x) => x.id === annId);
+        if (a) {
+          if ("w" in a) {
+            setMoving({ id: a.id, offsetX: toLocal(e).x - a.x, offsetY: toLocal(e).y - a.y });
+          } else if (a.type === "text") {
+            setMoving({ id: a.id, offsetX: toLocal(e).x - a.x, offsetY: toLocal(e).y - a.y });
+          }
+        }
       } else if (annId && handle === "se") {
         setSelectedId(annId);
         const a = annotations.find((x) => x.id === annId) as any;
@@ -66,7 +84,7 @@ export default function AnnotationOverlay({ tool, page, annotations, setAnnotati
       } else if (annId && ["nw","n","ne","e","s","sw","w"].includes(handle)) {
         setSelectedId(annId);
         const a = annotations.find((x) => x.id === annId) as any;
-        if (a) setResizing({ id: annId, handle, start: { x: a.x, y: a.y, w: a.w, h: a.h, px: toLocal(e).x, py: toLocal(e).y, keepRatio: e.shiftKey } });
+        if (a && (a.type === "text" || "w" in a)) setResizing({ id: annId, handle, start: { x: a.x, y: a.y, w: a.w || 100, h: a.h || 20, px: toLocal(e).x, py: toLocal(e).y, keepRatio: e.shiftKey } });
       } else {
         setSelectedId(null);
       }
@@ -76,11 +94,13 @@ export default function AnnotationOverlay({ tool, page, annotations, setAnnotati
     setDrag(p);
     if (tool === "text") {
       const id = crypto.randomUUID();
-      setAnnotations((prev) => prev.concat({ id, type: "text", x: p.x, y: p.y, text: "Edit", color: defaultColor || "#111827", size: defaultTextSize, fontFamily: defaultFontFamily, page }));
+      const defaultTextWidth = 100;
+      const defaultTextHeight = defaultTextSize || 14;
+      setAnnotations((prev) => prev.concat({ id, type: "text", x: p.x, y: p.y, text: "Edit", color: defaultColor || "#000000", size: defaultTextSize, fontFamily: defaultFontFamily, w: defaultTextWidth, h: defaultTextHeight, page }));
     } else if (tool === "rect" || tool === "ellipse") {
       const id = crypto.randomUUID();
       setDraftId(id);
-      setAnnotations((prev) => prev.concat({ id, type: tool, x: p.x, y: p.y, w: 1, h: 1, color: defaultColor || "#ef4444", stroke: defaultStroke, page } as Annotation));
+      setAnnotations((prev) => prev.concat({ id, type: tool, x: p.x, y: p.y, w: 1, h: 1, color: defaultColor || "#000000", stroke: defaultStroke, page } as Annotation));
     }
   };
 
@@ -136,7 +156,7 @@ export default function AnnotationOverlay({ tool, page, annotations, setAnnotati
           let nx = x + dx; let { ww, hh } = applyRatio(w - dx, h + dy); w = Math.max(10, ww); h = Math.max(10, hh); x = nx; break;
         }
       }
-      setAnnotations((prev) => prev.map((a) => (a.id === resizing.id && "w" in a ? { ...a, x: snap(x), y: snap(y), w: snap(w), h: snap(h) } : a)));
+      setAnnotations((prev) => prev.map((a) => (a.id === resizing.id && "w" in a ? { ...a, x: snap(x), y: snap(y), w: snap(w), h: snap(h) } : a.id === resizing.id && a.type === "text" ? { ...a, x: snap(x), y: snap(y), w: snap(w), h: snap(h) } : a)));
       return;
     }
     if (!drag || !draftId) return;
@@ -168,34 +188,87 @@ export default function AnnotationOverlay({ tool, page, annotations, setAnnotati
     >
       {items.map((a) => {
         if (a.type === "text") {
+          const isSelected = selectedId === a.id;
           return (
-            <input
-              key={a.id}
-              value={a.text}
-              onChange={(e) => onTextChange(a.id, e.target.value)}
-              className="absolute bg-transparent outline-none border-b border-dashed border-gray-300"
-              style={{ 
-                left: a.x, 
-                top: a.y, 
-                width: Math.max(40, a.text.length * 8), 
-                color: a.color, 
-                fontSize: (a.size ?? defaultTextSize),
-                fontFamily: (a.fontFamily ?? defaultFontFamily) + ", system-ui, -apple-system, sans-serif"
-              }}
-              data-aid={a.id}
-            />
+            <div key={a.id} className="relative">
+              <input
+                value={a.text}
+                onChange={(e) => onTextChange(a.id, e.target.value)}
+                className="absolute bg-transparent outline-none border-b border-dashed border-gray-300"
+                style={{ 
+                  left: a.x, 
+                  top: a.y, 
+                  width: a.w ?? Math.max(40, a.text.length * 8), 
+                  height: a.h ?? (a.size ?? defaultTextSize),
+                  color: a.color, 
+                  fontSize: (a.size ?? defaultTextSize),
+                  fontFamily: (a.fontFamily ?? defaultFontFamily) + ", system-ui, -apple-system, sans-serif"
+                }}
+                data-aid={a.id}
+              />
+              {isSelected && (
+                <div
+                  className="absolute border-2 border-indigo-500 bg-indigo-500/10 cursor-move"
+                  style={{
+                    left: a.x - 4,
+                    top: a.y - 4,
+                    width: (a.w ?? Math.max(40, a.text.length * 8)) + 8,
+                    height: (a.h ?? (a.size ?? defaultTextSize)) + 8,
+                  }}
+                  data-aid={a.id}
+                  data-handle="move"
+                >
+                  {/* Corner handles */}
+                  <div className="absolute -top-1 -left-1 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-nwse-resize" data-aid={a.id} data-handle="nw"></div>
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-nesw-resize" data-aid={a.id} data-handle="ne"></div>
+                  <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-nesw-resize" data-aid={a.id} data-handle="sw"></div>
+                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-nwse-resize" data-aid={a.id} data-handle="se"></div>
+                  {/* Edge handles */}
+                  <div className="absolute -top-1 left-1/2 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-ns-resize transform -translate-x-1/2" data-aid={a.id} data-handle="n"></div>
+                  <div className="absolute -bottom-1 left-1/2 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-ns-resize transform -translate-x-1/2" data-aid={a.id} data-handle="s"></div>
+                  <div className="absolute -left-1 top-1/2 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-ew-resize transform -translate-y-1/2" data-aid={a.id} data-handle="w"></div>
+                  <div className="absolute -right-1 top-1/2 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-ew-resize transform -translate-y-1/2" data-aid={a.id} data-handle="e"></div>
+                </div>
+              )}
+            </div>
           );
         }
         if (a.type === "image") {
+          const isSelected = selectedId === a.id;
           return (
-            <img
-              key={a.id}
-              src={a.src}
-              className={"absolute select-none " + (selectedId === a.id ? "ring-2 ring-indigo-500" : "")}
-              style={{ left: a.x, top: a.y, width: a.w, height: a.h }}
-              data-aid={a.id}
-              alt="annotation"
-            />
+            <div key={a.id} className="relative">
+              <img
+                src={a.src}
+                className="absolute select-none"
+                style={{ left: a.x, top: a.y, width: a.w, height: a.h }}
+                data-aid={a.id}
+                alt="annotation"
+              />
+              {isSelected && (
+                <div
+                  className="absolute border-2 border-indigo-500 bg-indigo-500/10 cursor-move"
+                  style={{
+                    left: a.x - 4,
+                    top: a.y - 4,
+                    width: a.w + 8,
+                    height: a.h + 8,
+                  }}
+                  data-aid={a.id}
+                  data-handle="move"
+                >
+                  {/* Corner handles */}
+                  <div className="absolute -top-1 -left-1 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-nwse-resize" data-aid={a.id} data-handle="nw"></div>
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-nesw-resize" data-aid={a.id} data-handle="ne"></div>
+                  <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-nesw-resize" data-aid={a.id} data-handle="sw"></div>
+                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-nwse-resize" data-aid={a.id} data-handle="se"></div>
+                  {/* Edge handles */}
+                  <div className="absolute -top-1 left-1/2 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-ns-resize transform -translate-x-1/2" data-aid={a.id} data-handle="n"></div>
+                  <div className="absolute -bottom-1 left-1/2 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-ns-resize transform -translate-x-1/2" data-aid={a.id} data-handle="s"></div>
+                  <div className="absolute -left-1 top-1/2 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-ew-resize transform -translate-y-1/2" data-aid={a.id} data-handle="w"></div>
+                  <div className="absolute -right-1 top-1/2 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-ew-resize transform -translate-y-1/2" data-aid={a.id} data-handle="e"></div>
+                </div>
+              )}
+            </div>
           );
         }
         const base = {
@@ -207,28 +280,34 @@ export default function AnnotationOverlay({ tool, page, annotations, setAnnotati
           border: `${(a as any).stroke ?? defaultStroke}px solid ${a.color}`,
           background: "transparent",
         };
-        const handles = [
-          { key: "nw", style: { left: -6, top: -6, cursor: "nwse-resize" } },
-          { key: "n", style: { left: "50%", top: -6, transform: "translateX(-50%)", cursor: "ns-resize" } },
-          { key: "ne", style: { right: -6, top: -6, cursor: "nesw-resize" } },
-          { key: "e", style: { right: -6, top: "50%", transform: "translateY(-50%)", cursor: "ew-resize" } },
-          { key: "se", style: { right: -6, bottom: -6, cursor: "nwse-resize" } },
-          { key: "s", style: { left: "50%", bottom: -6, transform: "translateX(-50%)", cursor: "ns-resize" } },
-          { key: "sw", style: { left: -6, bottom: -6, cursor: "nesw-resize" } },
-          { key: "w", style: { left: -6, top: "50%", transform: "translateY(-50%)", cursor: "ew-resize" } },
-        ];
+        const isSelected = selectedId === a.id;
         return (
-          <div key={a.id} style={base} className={(a.type === "ellipse" ? "rounded-full " : "") + (selectedId === a.id ? "ring-2 ring-indigo-500 " : "")} data-aid={a.id}>
-            {selectedId === a.id && "w" in a &&
-              handles.map((h) => (
-                <div
-                  key={h.key}
-                  data-aid={a.id}
-                  data-handle={h.key}
-                  className="absolute w-3 h-3 bg-white border border-indigo-500 rounded-sm"
-                  style={h.style as any}
-                />
-              ))}
+          <div key={a.id} className="relative">
+            <div style={base} className={a.type === "ellipse" ? "rounded-full" : ""} data-aid={a.id}></div>
+            {isSelected && "w" in a && (
+              <div
+                className="absolute border-2 border-indigo-500 bg-indigo-500/10 cursor-move"
+                style={{
+                  left: a.x - 4,
+                  top: a.y - 4,
+                  width: (a as any).w + 8,
+                  height: (a as any).h + 8,
+                }}
+                data-aid={a.id}
+                data-handle="move"
+              >
+                {/* Corner handles */}
+                <div className="absolute -top-1 -left-1 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-nwse-resize" data-aid={a.id} data-handle="nw"></div>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-nesw-resize" data-aid={a.id} data-handle="ne"></div>
+                <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-nesw-resize" data-aid={a.id} data-handle="sw"></div>
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-nwse-resize" data-aid={a.id} data-handle="se"></div>
+                {/* Edge handles */}
+                <div className="absolute -top-1 left-1/2 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-ns-resize transform -translate-x-1/2" data-aid={a.id} data-handle="n"></div>
+                <div className="absolute -bottom-1 left-1/2 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-ns-resize transform -translate-x-1/2" data-aid={a.id} data-handle="s"></div>
+                <div className="absolute -left-1 top-1/2 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-ew-resize transform -translate-y-1/2" data-aid={a.id} data-handle="w"></div>
+                <div className="absolute -right-1 top-1/2 w-3 h-3 bg-indigo-500 border border-white rounded-sm cursor-ew-resize transform -translate-y-1/2" data-aid={a.id} data-handle="e"></div>
+              </div>
+            )}
           </div>
         );
       })}

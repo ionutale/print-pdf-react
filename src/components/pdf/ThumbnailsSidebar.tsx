@@ -6,15 +6,18 @@ type Props = {
   currentPage: number;
   onSelectPage: (pageNum: number) => void;
   thumbScale?: number; // percentage, default 20
+  pages?: number[]; // optional explicit list of pages to show
+  onDeletePage?: (pageNum: number) => void;
 };
 
-export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, thumbScale = 20 }: Props) {
+export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, thumbScale = 20, pages: overridePages, onDeletePage }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const pages = useMemo(() => {
+    if (overridePages) return overridePages;
     if (!pdfDoc) return [] as number[];
     return Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1);
-  }, [pdfDoc]);
+  }, [pdfDoc, overridePages]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -39,10 +42,22 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
       wrapper.className = "p-2 flex flex-col items-center gap-1";
       wrapper.innerHTML = "";
       wrapper.appendChild(c);
+      const row = document.createElement('div');
+      row.className = 'w-full flex items-center justify-between mt-1';
       const label = document.createElement("div");
       label.textContent = String(num);
       label.className = "text-xs text-gray-600";
-      wrapper.appendChild(label);
+      row.appendChild(label);
+      if (onDeletePage) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.title = 'Delete page';
+        btn.className = 'text-xs text-red-600 hover:text-red-700 px-1 py-0.5 rounded';
+        btn.innerText = 'Delete';
+        btn.onclick = (e) => { e.stopPropagation(); onDeletePage(num); };
+        row.appendChild(btn);
+      }
+      wrapper.appendChild(row);
     };
     // lazy render using IntersectionObserver
     const io = new IntersectionObserver(
@@ -73,17 +88,29 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
       placeholder.style.width = "120px";
       placeholder.style.height = "160px";
       wrapper.appendChild(placeholder);
+      const row = document.createElement('div');
+      row.className = 'w-full flex items-center justify-between mt-1';
       const label = document.createElement("div");
       label.textContent = String(n);
-      label.className = "text-xs text-gray-600 mt-1";
-      wrapper.appendChild(label);
+      label.className = "text-xs text-gray-600";
+      row.appendChild(label);
+      if (onDeletePage) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.title = 'Delete page';
+        btn.className = 'text-xs text-red-600 hover:text-red-700 px-1 py-0.5 rounded';
+        btn.innerText = 'Delete';
+        btn.onclick = (e) => { e.stopPropagation(); onDeletePage(n); };
+        row.appendChild(btn);
+      }
+      wrapper.appendChild(row);
       io.observe(wrapper);
     });
     return () => {
       io.disconnect();
       if (container) container.innerHTML = "";
     };
-  }, [pdfDoc, pages, onSelectPage, thumbScale]);
+  }, [pdfDoc, pages, onSelectPage, thumbScale, onDeletePage]);
 
   useEffect(() => {
     const container = containerRef.current;

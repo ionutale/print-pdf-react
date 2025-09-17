@@ -28,6 +28,7 @@ export default function PdfViewer() {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [fileKey, setFileKey] = useState<string | null>(null);
   const [thumbScale, setThumbScale] = useState<number>(20);
+  const [visiblePages, setVisiblePages] = useState<number[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [strokeColor, setStrokeColor] = useState<string>("#ef4444");
   const [lineWidth, setLineWidth] = useState<number>(2);
@@ -40,7 +41,13 @@ export default function PdfViewer() {
 
   const scale = 1.5;
 
-  const updatePageLabel = () => `Page ${pdfDoc ? pageNum : 0} / ${pdfDoc?.numPages ?? 0}`;
+  const updatePageLabel = () => {
+    const total = visiblePages ? visiblePages.length : (pdfDoc?.numPages ?? 0);
+    if (!pdfDoc || total === 0) return "Page 0 / 0";
+    const idx = visiblePages ? visiblePages.indexOf(pageNum) : pageNum - 1;
+    const pos = idx >= 0 ? idx + 1 : 0;
+    return `Page ${pos} / ${total}`;
+  };
 
   const renderPage = useCallback(
     (num: number) => {
@@ -75,16 +82,21 @@ export default function PdfViewer() {
   };
 
   const onPrevPage = () => {
-    if (pageNum <= 1) return;
-    const n = pageNum - 1;
+    if (!pdfDoc) return;
+    const pages = visiblePages ?? Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1);
+    const idx = pages.indexOf(pageNum);
+    if (idx <= 0) return;
+    const n = pages[idx - 1];
     setPageNum(n);
     queueRenderPage(n);
   };
 
   const onNextPage = () => {
     if (!pdfDoc) return;
-    if (pageNum >= pdfDoc.numPages) return;
-    const n = pageNum + 1;
+    const pages = visiblePages ?? Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1);
+    const idx = pages.indexOf(pageNum);
+    if (idx === -1 || idx >= pages.length - 1) return;
+    const n = pages[idx + 1];
     setPageNum(n);
     queueRenderPage(n);
   };
@@ -95,7 +107,8 @@ export default function PdfViewer() {
     void btnDisabled; // kept for parity, state handled via derived props
     const container = printContainerRef.current;
     container.innerHTML = "";
-    for (let num = 1; num <= pdfDoc.numPages; num++) {
+    const pages = visiblePages ?? Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1);
+    for (const num of pages) {
       // eslint-disable-next-line no-await-in-loop
       const page = await pdfDoc.getPage(num);
       const printScale = 2;
@@ -200,15 +213,17 @@ export default function PdfViewer() {
             const key = (window as any).pendingPdfHash || fileKey;
             const raw = key ? localStorage.getItem(`pdf:${key}`) : null;
             if (raw) {
-              const saved = JSON.parse(raw) as { page?: number; annotations?: Annotation[] };
+              const saved = JSON.parse(raw) as { page?: number; annotations?: Annotation[]; pages?: number[] };
               if (saved.page) setPageNum(saved.page);
               if (saved.annotations) setAnnotations(saved.annotations);
+              if (saved.pages && saved.pages.length) setVisiblePages(saved.pages);
               restored = true;
             }
           } catch {
             /* noop */
           }
           if (!restored) setPageNum(1);
+          if (!restored) setVisiblePages(Array.from({ length: pdf.numPages }, (_, i) => i + 1));
           setIsLoading(false);
           queueRenderPage(1);
         })
@@ -292,7 +307,8 @@ export default function PdfViewer() {
   }, [strokeColor, lineWidth, textSize, selectedId]);
 
   const onExport = () => {
-    const data = JSON.stringify({ annotations, page: pageNum }, null, 2);
+    const pages = visiblePages ?? undefined;
+    const data = JSON.stringify({ annotations, page: pageNum, pages }, null, 2);
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -303,22 +319,39 @@ export default function PdfViewer() {
   };
   const onImport = (json: string) => {
     try {
-      const data = JSON.parse(json) as { annotations?: Annotation[]; page?: number };
+      const data = JSON.parse(json) as { annotations?: Annotation[]; page?: number; pages?: number[] };
       if (data.annotations) setAnnotations(data.annotations);
       if (typeof data.page === "number") setPageNum(data.page);
+      if (data.pages && data.pages.length) setVisiblePages(data.pages);
     } catch {}
   };
 
   // persist annotations and page when they change
   React.useEffect(() => {
     if (!fileKey) return;
-    const payload = JSON.stringify({ page: pageNum, annotations });
+    const payload = JSON.stringify({ page: pageNum, annotations, pages: visiblePages ?? undefined });
     try {
       localStorage.setItem(`pdf:${fileKey}`, payload);
     } catch {
       // ignore quota errors
     }
-  }, [annotations, pageNum, fileKey]);
+  }, [annotations, pageNum, fileKey, visiblePages]);
+
+  const deletePage = (n: number) => {
+    if (!visiblePages) return;
+    if (visiblePages.length <= 1) return; // don't delete last page
+    const idx = visiblePages.indexOf(n);
+    if (idx === -1) return;
+    const nextPages = visiblePages.filter((p) => p !== n);
+    setVisiblePages(nextPages);
+    setAnnotations((prev) => prev.filter((a) => a.page !== n));
+    // adjust current page only if we removed the current one
+    if (pageNum === n) {
+      const candidate = nextPages[Math.max(0, idx - 1)] ?? nextPages[0];
+      setPageNum(candidate);
+      queueRenderPage(candidate);
+    }
+  };
 
   const pageLabel = updatePageLabel();
   const controlsVisible = !!pdfDoc && !isLoading;
@@ -343,8 +376,8 @@ export default function PdfViewer() {
             <Controls
               visible={controlsVisible}
               pageLabel={pageLabel}
-              disablePrev={!pdfDoc || pageNum <= 1}
-              disableNext={!pdfDoc || (pdfDoc && pageNum >= pdfDoc.numPages)}
+              disablePrev={!pdfDoc || (() => { const pages = visiblePages ?? Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1); const idx = pages.indexOf(pageNum); return idx <= 0; })()}
+              disableNext={!pdfDoc || (() => { const pages = visiblePages ?? Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1); const idx = pages.indexOf(pageNum); return idx === -1 || idx >= pages.length - 1; })()}
               disablePrint={!pdfDoc}
               onPrev={onPrevPage}
               onNext={onNextPage}
@@ -388,12 +421,14 @@ export default function PdfViewer() {
             <ThumbnailsSidebar
               pdfDoc={pdfDoc}
               currentPage={pageNum}
-              onSelectPage={(n) => {
+              onSelectPage={(n: number) => {
                 if (!pdfDoc) return;
                 setPageNum(n);
                 queueRenderPage(n);
               }}
               thumbScale={thumbScale}
+              pages={visiblePages ?? undefined}
+              onDeletePage={deletePage}
             />
           </div>
             <div

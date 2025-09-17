@@ -76,6 +76,22 @@ pnpm start  # start production server
 
 If you need a native-tab view of the loaded PDF (similar to using `window.open` on a Blob URL), you can add a small button wired to the current PDF data source and call `window.open(URL.createObjectURL(new Blob([...], { type: 'application/pdf' })))`. Our viewer focuses on in-canvas rendering and printing; integrate this optionally if your flow needs it.
 
+## Deploy to GitHub Pages
+
+This app supports static export and deployment to GitHub Pages.
+
+- Static export: `pnpm build && pnpm export` generates `web-app/out/`.
+- GitHub Actions: A workflow is provided at `.github/workflows/deploy.yml` that builds and publishes to Pages on pushes to `main`.
+- Base path: The workflow sets `NEXT_PUBLIC_BASE_PATH='/${repo-name}'` and `GITHUB_PAGES=true` so assets resolve correctly under project pages. If you use a custom Pages path, update that env.
+
+Local preview of the static build:
+
+```bash
+pnpm build
+pnpm export
+npx serve out  # or any static server
+```
+
 ## License
 
 This project integrates pdf.js via CDN; refer to Mozilla pdf.js licensing for details. Your application code remains under your repository’s chosen license.

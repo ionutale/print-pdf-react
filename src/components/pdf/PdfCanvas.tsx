@@ -10,7 +10,7 @@ const PdfCanvas = forwardRef<HTMLCanvasElement, Props>(({ hidden }: Props, ref: 
     <canvas
       id="pdf-render"
       ref={ref}
-      className={(hidden ? "hidden" : "") + " border border-gray-200 shadow"}
+      className={(hidden ? "hidden" : "") + " border border-base-300 shadow"}
     />
   );
 });

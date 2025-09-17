@@ -12,8 +12,8 @@ type Props = {
 
 export default function HistorySidebar({ history, historyIndex, onUndo, onRedo, disableUndo, disableRedo }: Props) {
   return (
-    <aside className="w-48 shrink-0 h-[calc(100%-200px)] overflow-auto bg-white dark:bg-gray-900 rounded-lg shadow-md p-2">
-      <div className="text-xs text-gray-500 dark:text-gray-300 px-1 pb-2 flex items-center justify-between">
+    <aside className="w-48 shrink-0 h-[calc(100%-200px)] overflow-auto bg-base-100 rounded-lg shadow-md p-2">
+      <div className="text-xs text-base-content/60 px-1 pb-2 flex items-center justify-between">
         <span>History</span>
         <div className="flex items-center gap-1">
           {onUndo && (
@@ -49,11 +49,11 @@ export default function HistorySidebar({ history, historyIndex, onUndo, onRedo, 
           <div
             key={idx}
             className={`text-xs p-2 rounded ${
-              idx === historyIndex ? 'bg-indigo-100' : idx > historyIndex ? 'bg-gray-50 dark:bg-gray-800' : 'bg-white dark:bg-gray-900'
-            } text-gray-800 dark:text-gray-100`}
+              idx === historyIndex ? 'bg-primary/10' : idx > historyIndex ? 'bg-base-200' : 'bg-base-100'
+            } text-base-content`}
           >
             <div className="font-medium">{entry.action}</div>
-            <div className="text-gray-600 dark:text-gray-300">
+            <div className="text-base-content/70">
               {entry.action === 'delete' && `Deleted page ${entry.data.page}`}
               {entry.action === 'reorder' && `Reordered pages`}
               {entry.action === 'restore' && `Restored ${entry.data.pages.length} pages`}
@@ -61,7 +61,7 @@ export default function HistorySidebar({ history, historyIndex, onUndo, onRedo, 
           </div>
         ))}
         {history.length === 0 && (
-          <div className="text-xs text-gray-400 dark:text-gray-500 p-2">No operations yet</div>
+          <div className="text-xs text-base-content/50 p-2">No operations yet</div>
         )}
       </div>
     </aside>

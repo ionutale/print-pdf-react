@@ -34,9 +34,10 @@ export default function PdfViewer() {
   const [history, setHistory] = useState<{ action: string; data: any }[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [strokeColor, setStrokeColor] = useState<string>("#ef4444");
+  const [strokeColor, setStrokeColor] = useState<string>("#000000");
   const [lineWidth, setLineWidth] = useState<number>(2);
   const [textSize, setTextSize] = useState<number>(14);
+  const [fontFamily, setFontFamily] = useState<string>("Inter");
   const [snap, setSnap] = useState<boolean>(false);
   const pdfBytesRef = useRef<Uint8Array | null>(null);
 
@@ -130,7 +131,8 @@ export default function PdfViewer() {
         if (a.type === "text") {
           cctx.fillStyle = a.color;
           const size = ("size" in a && a.size ? a.size : textSize) as number;
-          cctx.font = `${size * ratio}px Inter, system-ui, -apple-system, sans-serif`;
+          const font = ("fontFamily" in a && a.fontFamily ? a.fontFamily : fontFamily) as string;
+          cctx.font = `${size * ratio}px ${font}, Inter, system-ui, -apple-system, sans-serif`;
           cctx.fillText(a.text, a.x * ratio, a.y * ratio);
         } else if (a.type === "image") {
           const img = new Image();
@@ -303,13 +305,13 @@ export default function PdfViewer() {
     setAnnotations((prev) =>
       prev.map((a) => {
         if (a.id !== selectedId) return a;
-        if (a.type === "text") return { ...a, color: strokeColor, size: textSize } as any;
+        if (a.type === "text") return { ...a, color: strokeColor, size: textSize, fontFamily: fontFamily } as any;
         if (a.type === "rect" || a.type === "ellipse") return { ...a, color: strokeColor, stroke: lineWidth } as any;
         return a;
       })
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [strokeColor, lineWidth, textSize, selectedId]);
+  }, [strokeColor, lineWidth, textSize, fontFamily, selectedId]);
 
   const onExport = () => {
     const pages = visiblePages ?? undefined;
@@ -483,6 +485,8 @@ export default function PdfViewer() {
               setLineWidth={setLineWidth}
               textSize={textSize}
               setTextSize={setTextSize}
+              fontFamily={fontFamily}
+              setFontFamily={setFontFamily}
               snap={snap}
               setSnap={setSnap}
               onExport={onExport}
@@ -560,6 +564,7 @@ export default function PdfViewer() {
                   defaultColor={strokeColor}
                   defaultStroke={lineWidth}
                   defaultTextSize={textSize}
+                  defaultFontFamily={fontFamily}
                 />
               )}
             </div>

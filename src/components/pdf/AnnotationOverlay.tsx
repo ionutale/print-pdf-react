@@ -4,7 +4,7 @@ import type { Tool } from "./Toolbar";
 
 export type Annotation =
   | { id: string; type: "rect" | "ellipse"; x: number; y: number; w: number; h: number; color: string; stroke?: number; page: number }
-  | { id: string; type: "text"; x: number; y: number; text: string; color: string; size?: number; page: number }
+  | { id: string; type: "text"; x: number; y: number; text: string; color: string; size?: number; fontFamily?: string; page: number }
   | { id: string; type: "image"; x: number; y: number; w: number; h: number; src: string; page: number };
 
 type Props = {
@@ -20,9 +20,10 @@ type Props = {
   defaultColor?: string;
   defaultStroke?: number;
   defaultTextSize?: number;
+  defaultFontFamily?: string;
 };
 
-export default function AnnotationOverlay({ tool, page, annotations, setAnnotations, canvasRef, selectedId, setSelectedId, snapEnabled = false, snapSize = 8, defaultColor = "#ef4444", defaultStroke = 2, defaultTextSize = 14 }: Props) {
+export default function AnnotationOverlay({ tool, page, annotations, setAnnotations, canvasRef, selectedId, setSelectedId, snapEnabled = false, snapSize = 8, defaultColor = "#ef4444", defaultStroke = 2, defaultTextSize = 14, defaultFontFamily = "Inter" }: Props) {
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const [drag, setDrag] = useState<{ x: number; y: number } | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -75,7 +76,7 @@ export default function AnnotationOverlay({ tool, page, annotations, setAnnotati
     setDrag(p);
     if (tool === "text") {
       const id = crypto.randomUUID();
-      setAnnotations((prev) => prev.concat({ id, type: "text", x: p.x, y: p.y, text: "Edit", color: defaultColor || "#111827", size: defaultTextSize, page }));
+      setAnnotations((prev) => prev.concat({ id, type: "text", x: p.x, y: p.y, text: "Edit", color: defaultColor || "#111827", size: defaultTextSize, fontFamily: defaultFontFamily, page }));
     } else if (tool === "rect" || tool === "ellipse") {
       const id = crypto.randomUUID();
       setDraftId(id);
@@ -173,7 +174,14 @@ export default function AnnotationOverlay({ tool, page, annotations, setAnnotati
               value={a.text}
               onChange={(e) => onTextChange(a.id, e.target.value)}
               className="absolute bg-transparent outline-none border-b border-dashed border-gray-300"
-              style={{ left: a.x, top: a.y, width: Math.max(40, a.text.length * 8), color: a.color, fontSize: (a.size ?? defaultTextSize) }}
+              style={{ 
+                left: a.x, 
+                top: a.y, 
+                width: Math.max(40, a.text.length * 8), 
+                color: a.color, 
+                fontSize: (a.size ?? defaultTextSize),
+                fontFamily: (a.fontFamily ?? defaultFontFamily) + ", system-ui, -apple-system, sans-serif"
+              }}
               data-aid={a.id}
             />
           );

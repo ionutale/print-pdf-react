@@ -14,13 +14,15 @@ type Props = {
   setLineWidth?: (w: number) => void;
   textSize?: number;
   setTextSize?: (s: number) => void;
+  fontFamily?: string;
+  setFontFamily?: (f: string) => void;
   snap?: boolean;
   setSnap?: (v: boolean) => void;
   onExport?: () => void;
   onImport?: (json: string) => void;
 };
 
-export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color, setColor, lineWidth, setLineWidth, textSize, setTextSize, snap, setSnap, onExport, onImport }: Props) {
+export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color, setColor, lineWidth, setLineWidth, textSize, setTextSize, fontFamily, setFontFamily, snap, setSnap, onExport, onImport }: Props) {
   const Icon = ({ name }: { name: string }) => {
     switch (name) {
       case "select":
@@ -137,6 +139,24 @@ export default function Toolbar({ tool, setTool, onImagePick, onClearPage, color
           <span>Text</span>
         </label>
         <input type="number" min={10} max={48} value={textSize} onChange={(e) => setTextSize?.(parseInt(e.target.value))} className="w-16" />
+        <label className="text-xs text-gray-600 inline-flex items-center gap-1" title="Font Family">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path d="M3.5 4.75A.75.75 0 0 1 4.25 4h11.5a.75.75 0 0 1 0 1.5h-4.5v10a.75.75 0 0 1-1.5 0v-10h-5.5A.75.75 0 0 1 3.5 4.75Z" /></svg>
+          <span>Font</span>
+        </label>
+        <select value={fontFamily} onChange={(e) => setFontFamily?.(e.target.value)} className="text-xs border rounded px-2 py-1">
+          <option value="Inter">Inter (Default)</option>
+          <option value="Arial">Arial</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Courier New">Courier New</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Dancing Script">Dancing Script (Cursive)</option>
+          <option value="Great Vibes">Great Vibes (Cursive)</option>
+          <option value="Allura">Allura (Cursive)</option>
+          <option value="Satisfy">Satisfy (Cursive)</option>
+          <option value="Caveat">Caveat (Handwriting)</option>
+          <option value="Kalam">Kalam (Handwriting)</option>
+          <option value="Permanent Marker">Permanent Marker (Marker)</option>
+        </select>
         <label className="text-xs text-gray-600 inline-flex items-center gap-1" title="Snap to Grid">
           <Icon name="grid" /> <span>Snap</span>
         </label>

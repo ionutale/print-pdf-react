@@ -1,10 +1,52 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Dancing_Script, Great_Vibes, Allura, Satisfy, Caveat, Kalam, Permanent_Marker } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+});
+
+const dancingScript = Dancing_Script({
+  variable: "--font-dancing-script",
+  subsets: ["latin"],
+  weight: "400",
+});
+
+const greatVibes = Great_Vibes({
+  variable: "--font-great-vibes",
+  subsets: ["latin"],
+  weight: "400",
+});
+
+const allura = Allura({
+  variable: "--font-allura",
+  subsets: ["latin"],
+  weight: "400",
+});
+
+const satisfy = Satisfy({
+  variable: "--font-satisfy",
+  subsets: ["latin"],
+  weight: "400",
+});
+
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+  weight: "400",
+});
+
+const kalam = Kalam({
+  variable: "--font-kalam",
+  subsets: ["latin"],
+  weight: "400",
+});
+
+const permanentMarker = Permanent_Marker({
+  variable: "--font-permanent-marker",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -19,7 +61,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}>
+      <body className={`${inter.variable} ${dancingScript.variable} ${greatVibes.variable} ${allura.variable} ${satisfy.variable} ${caveat.variable} ${kalam.variable} ${permanentMarker.variable} antialiased`}>
         {children}
       </body>
     </html>

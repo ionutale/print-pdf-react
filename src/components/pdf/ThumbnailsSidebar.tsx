@@ -59,8 +59,12 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.title = 'Delete page';
-        btn.className = 'text-xs text-red-600 hover:text-red-700 px-1 py-0.5 rounded';
-        btn.innerText = 'Delete';
+        btn.className = 'text-xs text-red-600 hover:text-red-700 px-1 py-0.5 rounded flex items-center';
+        btn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        `;
         btn.onclick = (e) => {
           e.stopPropagation();
           if (!onDeletePage) return;
@@ -144,8 +148,12 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.title = 'Delete page';
-        btn.className = 'text-xs text-red-600 hover:text-red-700 px-1 py-0.5 rounded';
-        btn.innerText = 'Delete';
+        btn.className = 'text-xs text-red-600 hover:text-red-700 px-1 py-0.5 rounded flex items-center';
+        btn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        `;
         btn.onclick = (e) => {
           e.stopPropagation();
           if (!onDeletePage) return;
@@ -174,7 +182,7 @@ export default function ThumbnailsSidebar({ pdfDoc, currentPage, onSelectPage, t
   }, [currentPage]);
 
   return (
-    <aside className="w-48 shrink-0 h-[calc(100vh-150px)] overflow-auto bg-white rounded-lg shadow-md p-2">
+    <aside className="w-48 shrink-0 h-[calc(100vh-200px)] overflow-auto bg-white rounded-lg shadow-md p-2">
       <div className="text-xs text-gray-500 px-1 pb-1">Pages</div>
       <div ref={containerRef} className="grid gap-2">
         {/* thumbnails injected here */}

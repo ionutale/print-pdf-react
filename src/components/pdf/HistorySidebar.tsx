@@ -8,7 +8,7 @@ type Props = {
 
 export default function HistorySidebar({ history, historyIndex }: Props) {
   return (
-    <aside className="w-48 shrink-0 h-[calc(100vh-150px)] overflow-auto bg-white rounded-lg shadow-md p-2">
+    <aside className="w-48 shrink-0 h-[calc(100vh-200px)] overflow-auto bg-white rounded-lg shadow-md p-2">
       <div className="text-xs text-gray-500 px-1 pb-1">History</div>
       <div className="flex flex-col gap-1">
         {history.map((entry, idx) => (

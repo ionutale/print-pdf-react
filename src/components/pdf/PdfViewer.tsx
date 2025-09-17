@@ -470,22 +470,6 @@ export default function PdfViewer() {
         <div className="bg-white rounded-lg shadow-md p-4 mb-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm text-gray-500">{pdfDoc ? (typeof pdfDoc.numPages === "number" ? `${pdfDoc.numPages} pages loaded` : "PDF loaded") : "No PDF loaded"}</div>
-            <Controls
-              visible={controlsVisible}
-              pageLabel={pageLabel}
-              disablePrev={!pdfDoc || (() => { const pages = visiblePages ?? Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1); const idx = pages.indexOf(pageNum); return idx <= 0; })()}
-              disableNext={!pdfDoc || (() => { const pages = visiblePages ?? Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1); const idx = pages.indexOf(pageNum); return idx === -1 || idx >= pages.length - 1; })()}
-              disablePrint={!pdfDoc}
-              onPrev={onPrevPage}
-              onNext={onNextPage}
-              onPrint={onPrint}
-              onOpen={onOpenNative}
-              disableOpen={!pdfDoc}
-              onUndo={undo}
-              onRedo={redo}
-              disableUndo={historyIndex < 0}
-              disableRedo={historyIndex >= history.length - 1}
-            />
           </div>
           <div className="mt-3">
             <Toolbar
@@ -538,7 +522,7 @@ export default function PdfViewer() {
           </div>
             <div
               id="pdf-viewer"
-              className="relative bg-white p-4 rounded-lg shadow-md flex justify-center items-center h-[calc(100vh-150px)] grow"
+              className="relative bg-white p-4 rounded-lg shadow-md flex justify-center items-center h-[calc(100vh-200px)] grow"
               onDragOver={(e) => {
                 if (pdfDoc) return;
                 e.preventDefault();
@@ -580,6 +564,24 @@ export default function PdfViewer() {
               )}
             </div>
             <HistorySidebar history={history} historyIndex={historyIndex} />
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-4 mt-4">
+          <Controls
+            visible={controlsVisible}
+            pageLabel={pageLabel}
+            disablePrev={!pdfDoc || (() => { const pages = visiblePages ?? Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1); const idx = pages.indexOf(pageNum); return idx <= 0; })()}
+            disableNext={!pdfDoc || (() => { const pages = visiblePages ?? Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1); const idx = pages.indexOf(pageNum); return idx === -1 || idx >= pages.length - 1; })()}
+            disablePrint={!pdfDoc}
+            onPrev={onPrevPage}
+            onNext={onNextPage}
+            onPrint={onPrint}
+            onOpen={onOpenNative}
+            disableOpen={!pdfDoc}
+            onUndo={undo}
+            onRedo={redo}
+            disableUndo={historyIndex < 0}
+            disableRedo={historyIndex >= history.length - 1}
+          />
         </div>
       </div>
       <PrintContainer ref={printContainerRef} />
